@@ -1,0 +1,6 @@
+{
+  "name": "Islam360 - Quran, Hadith & Islamic Portal",
+  "description": "Comprehensive Islamic platform featuring Holy Quran with audio & translations, authentic Hadith library, live prayer times, Qibla compass, digital Tasbih, Duas, 99 Names of Allah, Zakat calculator, and AI Islamic knowledge search with glowing animations.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
