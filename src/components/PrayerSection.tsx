@@ -4,6 +4,12 @@ import {
   Clock, 
   MapPin, 
   Volume2, 
+  VolumeX,
+  Play,
+  Pause,
+  Bell,
+  BellOff,
+  Radio,
   Moon, 
   Sun, 
   Compass, 
@@ -15,13 +21,47 @@ import {
 } from 'lucide-react';
 import { CityLocation, PrayerTimesData } from '../types';
 import { POPULAR_CITIES, calculatePrayerTimes } from '../data/prayerData';
+import { adhanPlayer, ADHAN_VOICES } from '../utils/adhanPlayer';
+
+const parseTimeToMinutes = (timeStr: string): number => {
+  if (!timeStr) return -1;
+  const match = timeStr.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return -1;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const isPM = match[3].toUpperCase() === 'PM';
+  if (isPM && h < 12) h += 12;
+  if (!isPM && h === 12) h = 0;
+  return h * 60 + m;
+};
 
 export const PrayerSection: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<CityLocation>(POPULAR_CITIES[0]); // Karachi
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimesData>(calculatePrayerTimes(POPULAR_CITIES[0]));
   const [isPlayingAdhan, setIsPlayingAdhan] = useState(false);
-  const [adhanAudio, setAdhanAudio] = useState<HTMLAudioElement | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'times' | 'guide' | 'qaza'>('times');
+
+  // Auto-Adhan states
+  const [autoAdhanEnabled, setAutoAdhanEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('islam360_auto_adhan');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [selectedVoice, setSelectedVoice] = useState<string>('makkah');
+  const [activeAdhanInfo, setActiveAdhanInfo] = useState<{
+    name: string;
+    urdu: string;
+  } | null>(null);
+  const [lastTriggeredPrayer, setLastTriggeredPrayer] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Subscribe to adhanPlayer
+  useEffect(() => {
+    const unsubscribe = adhanPlayer.subscribe((playing, info) => {
+      setIsPlayingAdhan(playing);
+      setActiveAdhanInfo(info);
+    });
+    return unsubscribe;
+  }, []);
 
   // Qaza Namaz state (stored in localStorage)
   const [qazaCounts, setQazaCounts] = useState({
@@ -53,22 +93,70 @@ export const PrayerSection: React.FC = () => {
     setPrayerTimes(calculatePrayerTimes(selectedCity));
   }, [selectedCity]);
 
-  // Handle Adhan Audio
-  const toggleAdhan = () => {
-    if (isPlayingAdhan && adhanAudio) {
-      adhanAudio.pause();
-      setIsPlayingAdhan(false);
-    } else {
-      if (adhanAudio) {
-        adhanAudio.play();
-        setIsPlayingAdhan(true);
-      } else {
-        const audio = new Audio("https://cdn.aladhan.com/audio/adhans/makkah.mp3");
-        audio.onended = () => setIsPlayingAdhan(false);
-        audio.play().catch(e => console.log('Adhan play error', e));
-        setAdhanAudio(audio);
-        setIsPlayingAdhan(true);
+  // Automatic Clock and Adhan Scheduler
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
+
+      const curHours = now.getHours();
+      const curMinutes = now.getMinutes();
+      const curTotalMinutes = curHours * 60 + curMinutes;
+      const dateKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+      const dailyAdhanPrayers = [
+        { key: 'fajr', name: 'Fajr', urdu: 'فجر', time: prayerTimes.fajr },
+        { key: 'dhuhr', name: 'Dhuhr', urdu: 'ظہر', time: prayerTimes.dhuhr },
+        { key: 'asr', name: 'Asr', urdu: 'عصر', time: prayerTimes.asr },
+        { key: 'maghrib', name: 'Maghrib', urdu: 'مغرب', time: prayerTimes.maghrib },
+        { key: 'isha', name: 'Isha', urdu: 'عشاء', time: prayerTimes.isha },
+      ];
+
+      if (autoAdhanEnabled) {
+        for (const p of dailyAdhanPrayers) {
+          const prayerMins = parseTimeToMinutes(p.time);
+          if (prayerMins === curTotalMinutes) {
+            const triggerId = `${dateKey}_${p.key}`;
+            if (lastTriggeredPrayer !== triggerId) {
+              setLastTriggeredPrayer(triggerId);
+              playAdhan(p.name, p.urdu);
+              break;
+            }
+          }
+        }
       }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [prayerTimes, autoAdhanEnabled, lastTriggeredPrayer, selectedVoice]);
+
+  // Play Adhan Audio directly into speaker
+  const playAdhan = (prayerName = 'Dhuhr', prayerUrdu = 'ظہر') => {
+    adhanPlayer.setVoice(selectedVoice);
+    adhanPlayer.play(prayerName, prayerUrdu, selectedVoice);
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(`اذان کا وقت: نمازِ ${prayerUrdu} (${prayerName})`, {
+          body: `نماز کا وقت ہو گیا ہے۔ حَيَّ عَلَى الصَّلَاةِ - ${selectedCity.name}`,
+          icon: '/favicon.ico'
+        });
+      } catch (e) {}
+    } else if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  };
+
+  const stopAdhan = () => {
+    adhanPlayer.stop();
+  };
+
+  const toggleAutoAdhan = () => {
+    const nextVal = !autoAdhanEnabled;
+    setAutoAdhanEnabled(nextVal);
+    localStorage.setItem('islam360_auto_adhan', String(nextVal));
+    if (nextVal && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
     }
   };
 
@@ -181,36 +269,82 @@ export const PrayerSection: React.FC = () => {
                 </p>
               </div>
 
-              {/* Adhan Listen Button */}
-              <button
-                id="prayer-listen-adhan-button"
-                onClick={toggleAdhan}
-                className={`px-6 py-3.5 rounded-full font-bold text-sm flex items-center space-x-3 transition-all cursor-pointer shadow-sm ${
-                  isPlayingAdhan
-                    ? 'bg-amber-500 text-white border-2 border-amber-600 animate-pulse'
-                    : 'bg-[#2e7d32] text-white hover:bg-[#256629]'
-                }`}
-              >
-                <Volume2 className={`w-5 h-5 ${isPlayingAdhan ? 'animate-spin' : ''}`} />
-                <span>{isPlayingAdhan ? 'Stop Adhan' : 'Listen Makkah Adhan'}</span>
-              </button>
+              {/* Adhan Controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Voice Selector */}
+                <div className="flex items-center space-x-1.5 bg-white/90 border border-emerald-300 rounded-2xl px-3 py-2 text-xs">
+                  <Radio className="w-3.5 h-3.5 text-[#2e7d32]" />
+                  <select
+                    value={selectedVoice}
+                    onChange={(e) => {
+                      setSelectedVoice(e.target.value);
+                      adhanPlayer.setVoice(e.target.value);
+                    }}
+                    className="bg-transparent border-none focus:outline-none text-slate-800 font-bold text-xs cursor-pointer"
+                  >
+                    {ADHAN_VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Auto Adhan Toggle */}
+                <button
+                  onClick={toggleAutoAdhan}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center space-x-2 border transition-all cursor-pointer ${
+                    autoAdhanEnabled
+                      ? 'bg-emerald-100 border-emerald-300 text-[#1b5e20]'
+                      : 'bg-white border-slate-300 text-slate-500'
+                  }`}
+                >
+                  {autoAdhanEnabled ? (
+                    <Bell className="w-4 h-4 text-[#2e7d32]" />
+                  ) : (
+                    <BellOff className="w-4 h-4 text-slate-400" />
+                  )}
+                  <span>{autoAdhanEnabled ? 'Auto Adhan: ON' : 'Auto Adhan: OFF'}</span>
+                </button>
+
+                {/* Play / Stop Button */}
+                {isPlayingAdhan ? (
+                  <button
+                    id="prayer-listen-adhan-button"
+                    onClick={stopAdhan}
+                    className="px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 shadow-sm cursor-pointer"
+                  >
+                    <Pause className="w-4 h-4" />
+                    <span>Stop Adhan</span>
+                  </button>
+                ) : (
+                  <button
+                    id="prayer-listen-adhan-button"
+                    onClick={() => playAdhan('Dhuhr', 'ظہر')}
+                    className="px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center space-x-2 bg-[#2e7d32] hover:bg-[#256629] text-white shadow-sm cursor-pointer"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>Test Adhan Voice</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Detailed Prayer Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { name: "Fajr", urdu: "نمازِ فجر", time: prayerTimes.fajr, desc: "Dawn prayer before sunrise", rakats: "2 Sunnah, 2 Fard" },
-              { name: "Sunrise", urdu: "طلوعِ آفتاب", time: prayerTimes.sunrise, desc: "End of Fajr prayer time", rakats: "Ishraq prayer recommended" },
-              { name: "Dhuhr", urdu: "نمازِ ظہر", time: prayerTimes.dhuhr, desc: "Midday prayer after zenith", rakats: "4 Sunnah, 4 Fard, 2 Sunnah, 2 Nafl" },
-              { name: "Asr", urdu: "نمازِ عصر", time: prayerTimes.asr, desc: "Late afternoon prayer", rakats: "4 Sunnah Ghair Mu'akkadah, 4 Fard" },
-              { name: "Maghrib", urdu: "نمازِ مغرب", time: prayerTimes.maghrib, desc: "Immediately after sunset", rakats: "3 Fard, 2 Sunnah, 2 Nafl" },
-              { name: "Isha", urdu: "نمازِ عشاء", time: prayerTimes.isha, desc: "Night prayer before sleep", rakats: "4 Fard, 2 Sunnah, 3 Witr, 2 Nafl" },
-              { name: "Tahajjud", urdu: "نمازِ تہجد", time: prayerTimes.tahajjud, desc: "Virtuous night vigil prayer", rakats: "2 to 8 Nafl before Fajr" },
+              { name: "Fajr", urdu: "نمازِ فجر", time: prayerTimes.fajr, desc: "Dawn prayer before sunrise", rakats: "2 Sunnah, 2 Fard", hasAdhan: true },
+              { name: "Sunrise", urdu: "طلوعِ آفتاب", time: prayerTimes.sunrise, desc: "End of Fajr prayer time", rakats: "Ishraq prayer recommended", hasAdhan: false },
+              { name: "Dhuhr", urdu: "نمازِ ظہر", time: prayerTimes.dhuhr, desc: "Midday prayer after zenith", rakats: "4 Sunnah, 4 Fard, 2 Sunnah, 2 Nafl", hasAdhan: true },
+              { name: "Asr", urdu: "نمازِ عصر", time: prayerTimes.asr, desc: "Late afternoon prayer", rakats: "4 Sunnah Ghair Mu'akkadah, 4 Fard", hasAdhan: true },
+              { name: "Maghrib", urdu: "نمازِ مغرب", time: prayerTimes.maghrib, desc: "Immediately after sunset", rakats: "3 Fard, 2 Sunnah, 2 Nafl", hasAdhan: true },
+              { name: "Isha", urdu: "نمازِ عشاء", time: prayerTimes.isha, desc: "Night prayer before sleep", rakats: "4 Fard, 2 Sunnah, 3 Witr, 2 Nafl", hasAdhan: true },
+              { name: "Tahajjud", urdu: "نمازِ تہجد", time: prayerTimes.tahajjud, desc: "Virtuous night vigil prayer", rakats: "2 to 8 Nafl before Fajr", hasAdhan: false },
             ].map((p, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-3xl p-6 border border-slate-200/90 hover:border-[#2e7d32] shadow-xs hover:shadow-sm transition-all space-y-2"
+                className="bg-white rounded-3xl p-6 border border-slate-200/90 hover:border-[#2e7d32] shadow-xs hover:shadow-sm transition-all space-y-2 relative"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#2e7d32]">
@@ -226,8 +360,18 @@ export const PrayerSection: React.FC = () => {
                 <p className="text-xs text-slate-500">
                   {p.desc}
                 </p>
-                <div className="pt-2 border-t border-slate-100 text-xs text-[#2e7d32] font-semibold">
-                  {p.rakats}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-[#2e7d32] font-semibold">
+                  <span>{p.rakats}</span>
+                  {p.hasAdhan && (
+                    <button
+                      onClick={() => playAdhan(p.name, p.urdu)}
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#2e7d32] text-[11px] font-bold transition-colors cursor-pointer"
+                      title="Play Adhan"
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>Adhan</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

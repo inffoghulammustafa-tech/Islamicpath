@@ -29,22 +29,32 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({ isOpen, onCl
 
           {/* Header */}
           <div className="flex items-center space-x-3">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-b from-[#60af25] to-[#48a124] shadow-md flex flex-col items-center justify-center text-white border border-[#449921] shrink-0">
-              <span className="font-arabic text-base leading-none font-bold pt-0.5">إسلام</span>
-              <span className="text-xs font-black tracking-tight leading-none">360</span>
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-md border-2 border-emerald-500/40 bg-emerald-50 shrink-0">
+              <img
+                src="/images/logo.jpg"
+                alt="Islamic Path Logo"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg') {
+                    target.src = 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg';
+                  }
+                }}
+              />
             </div>
             <div>
               <h3 className="text-xl font-black text-[#111827]">
-                Islam360 Mobile App
+                Islamic Path Mobile App
               </h3>
               <p className="text-xs text-slate-500">
-                World's 1st &amp; Only Comprehensive Islamic Search Engine
+                شاہراہِ اسلام • Comprehensive Islamic Search &amp; Quran App
               </p>
               <div className="flex items-center space-x-1 mt-0.5 text-amber-500 text-xs">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 ))}
-                <span className="text-slate-600 font-bold ml-1">4.8 (10M+ Downloads)</span>
+                <span className="text-slate-600 font-bold ml-1">4.9 (5M+ Active Users)</span>
               </div>
             </div>
           </div>
@@ -53,7 +63,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({ isOpen, onCl
           <div className="space-y-3">
             {/* Apple App Store */}
             <a
-              href="https://apps.apple.com/app/islam360"
+              href="https://apps.apple.com/app/islamicpath"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 hover:border-[#2e7d32] hover:bg-emerald-50/50 transition-all group"
@@ -74,7 +84,7 @@ export const DownloadAppModal: React.FC<DownloadAppModalProps> = ({ isOpen, onCl
 
             {/* Google Play Store */}
             <a
-              href="https://play.google.com/store/apps/details?id=com.islam360"
+              href="https://play.google.com/store/apps/details?id=com.islamicpath"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 hover:border-[#2e7d32] hover:bg-emerald-50/50 transition-all group"

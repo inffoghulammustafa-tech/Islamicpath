@@ -11,12 +11,18 @@ import {
   Play, 
   Pause, 
   Volume2, 
+  VolumeX,
+  Bell,
+  BellOff,
+  Radio,
   BookmarkCheck, 
   ChevronRight, 
   MapPin,
   Share2,
   Copy,
   Check,
+  CheckCircle2,
+  AlertCircle,
   Download,
   Smartphone
 } from 'lucide-react';
@@ -24,12 +30,28 @@ import { ActiveTab, PrayerTimesData, CityLocation } from '../types';
 import { POPULAR_CITIES, calculatePrayerTimes } from '../data/prayerData';
 import { BorderOrbitingGlow } from './BorderOrbitingGlow';
 import { NeonDualBorderBeam } from './NeonDualBorderBeam';
+import { QuranPageFlipper } from './QuranPageFlipper';
+import { ScholarsTestimonials } from './ScholarsTestimonials';
+import { ScholarsMarquee } from './ScholarsMarquee';
+import { adhanPlayer, ADHAN_VOICES } from '../utils/adhanPlayer';
 
 interface HomeDashboardProps {
   setActiveTab: (tab: ActiveTab) => void;
   onOpenDonate?: () => void;
   onOpenDownload?: () => void;
 }
+
+const parseTimeToMinutes = (timeStr: string): number => {
+  if (!timeStr) return -1;
+  const match = timeStr.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return -1;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  const isPM = match[3].toUpperCase() === 'PM';
+  if (isPM && h < 12) h += 12;
+  if (!isPM && h === 12) h = 0;
+  return h * 60 + m;
+};
 
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({ 
   setActiveTab, 
@@ -40,15 +62,39 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimesData>(calculatePrayerTimes(POPULAR_CITIES[0]));
   const [isPlayingAyatAudio, setIsPlayingAyatAudio] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  
+  // Adhan state synced with singleton player
   const [isPlayingAdhan, setIsPlayingAdhan] = useState(false);
-  const [adhanAudio, setAdhanAudio] = useState<HTMLAudioElement | null>(null);
+  const [autoAdhanEnabled, setAutoAdhanEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('islam360_auto_adhan');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [selectedVoice, setSelectedVoice] = useState<string>('makkah');
+  const [activeAdhanInfo, setActiveAdhanInfo] = useState<{
+    name: string;
+    urdu: string;
+  } | null>(null);
+  const [lastTriggeredPrayer, setLastTriggeredPrayer] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [showDuaAfterAdhan, setShowDuaAfterAdhan] = useState(false);
+  const [testNotice, setTestNotice] = useState<string | null>(null);
+
+  // Subscribe to adhanPlayer state
+  useEffect(() => {
+    const unsubscribe = adhanPlayer.subscribe((playing, data) => {
+      setIsPlayingAdhan(playing);
+      setActiveAdhanInfo(data);
+    });
+    return unsubscribe;
+  }, []);
+
   const [copiedHadith, setCopiedHadith] = useState(false);
   const [copiedAyat, setCopiedAyat] = useState(false);
   const [isHadithHovered, setIsHadithHovered] = useState(false);
   const [isAyatHovered, setIsAyatHovered] = useState(false);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
-  // Exact Ayat from Islam360 screenshot: Surah al baqara [2-183]
+  // Exact Ayat: Surah al baqara [2-183]
   const dailyAyat = {
     surahTitle: "Surah al baqara [2-183]",
     surahUrdu: "سورۃ البقرۃ [۱۸۳]",
@@ -58,7 +104,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     audioUrl: "https://everyayah.com/data/Alafasy_128kbps/002183.mp3",
   };
 
-  // Exact Hadith from Islam360 screenshot: Mishkat ul Masabih # 1957
+  // Exact Hadith: Mishkat ul Masabih # 1957
   const dailyHadith = {
     source: "Mishkat ul Masabih # 1957",
     arabic: "إِنَّ فِي الْجَنَّةِ بَابًا يُقَالُ لَهُ الرَّيَّانُ يَدْخُلُ مِنْهُ الصَّائِمُونَ يَوْمَ الْقِيَامَةِ",
@@ -69,6 +115,45 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   useEffect(() => {
     setPrayerTimes(calculatePrayerTimes(selectedCity));
   }, [selectedCity]);
+
+  // Automatic Clock and Adhan Scheduler
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
+
+      const curHours = now.getHours();
+      const curMinutes = now.getMinutes();
+      const curTotalMinutes = curHours * 60 + curMinutes;
+      const dateKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+      // 5 daily prayers that have an Adhan (Sunrise does not have an Adhan)
+      const dailyAdhanPrayers = [
+        { key: 'fajr', name: 'Fajr', urdu: 'فجر', time: prayerTimes.fajr },
+        { key: 'dhuhr', name: 'Dhuhr', urdu: 'ظہر', time: prayerTimes.dhuhr },
+        { key: 'asr', name: 'Asr', urdu: 'عصر', time: prayerTimes.asr },
+        { key: 'maghrib', name: 'Maghrib', urdu: 'مغرب', time: prayerTimes.maghrib },
+        { key: 'isha', name: 'Isha', urdu: 'عشاء', time: prayerTimes.isha },
+      ];
+
+      if (autoAdhanEnabled) {
+        for (const p of dailyAdhanPrayers) {
+          const prayerMins = parseTimeToMinutes(p.time);
+          if (prayerMins === curTotalMinutes) {
+            const triggerId = `${dateKey}_${p.key}`;
+            if (lastTriggeredPrayer !== triggerId) {
+              setLastTriggeredPrayer(triggerId);
+              // Trigger automatic Adhan voice playback!
+              playAdhan(p.name, p.urdu);
+              break;
+            }
+          }
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [prayerTimes, autoAdhanEnabled, lastTriggeredPrayer, selectedVoice]);
 
   const toggleAyatAudio = () => {
     if (isPlayingAyatAudio && audioElement) {
@@ -88,22 +173,43 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     }
   };
 
-  const toggleAdhan = () => {
-    if (isPlayingAdhan && adhanAudio) {
-      adhanAudio.pause();
-      setIsPlayingAdhan(false);
-    } else {
-      if (adhanAudio) {
-        adhanAudio.play();
-        setIsPlayingAdhan(true);
-      } else {
-        const audio = new Audio("https://cdn.aladhan.com/audio/adhans/makkah.mp3");
-        audio.onended = () => setIsPlayingAdhan(false);
-        audio.play().catch(e => console.log('Adhan error', e));
-        setAdhanAudio(audio);
-        setIsPlayingAdhan(true);
-      }
+  // Play Adhan Voice directly into speaker via adhanPlayer
+  const playAdhan = (prayerName = 'Dhuhr', prayerUrdu = 'ظہر') => {
+    adhanPlayer.setVoice(selectedVoice);
+    adhanPlayer.play(prayerName, prayerUrdu, selectedVoice);
+
+    // Attempt browser notification if supported
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(`اذان کا وقت: نمازِ ${prayerUrdu} (${prayerName})`, {
+          body: `نماز کا وقت ہو گیا ہے۔ حَيَّ عَلَى الصَّلَاةِ - ${selectedCity.name}`,
+          icon: '/favicon.ico'
+        });
+      } catch (e) {}
+    } else if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
     }
+  };
+
+  const stopAdhan = () => {
+    adhanPlayer.stop();
+  };
+
+  const toggleAutoAdhan = () => {
+    const nextVal = !autoAdhanEnabled;
+    setAutoAdhanEnabled(nextVal);
+    localStorage.setItem('islam360_auto_adhan', String(nextVal));
+    if (nextVal && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+    setTestNotice(nextVal ? 'خودکار اذان چالو کر دی گئی ہے (Auto Adhan Enabled)' : 'خودکار اذان بند کر دی گئی ہے (Auto Adhan Disabled)');
+    setTimeout(() => setTestNotice(null), 3000);
+  };
+
+  const triggerTestAdhan = () => {
+    playAdhan('Dhuhr', 'ظہر');
+    setTestNotice('ٹیسٹ اذان چل رہی ہے (Playing Test Adhan)');
+    setTimeout(() => setTestNotice(null), 3500);
   };
 
   const copyText = (text: string, type: 'hadith' | 'ayat') => {
@@ -116,6 +222,35 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       setTimeout(() => setCopiedAyat(false), 2000);
     }
   };
+
+  // Compute Active & Next Prayer
+  const curMinutesFromMidnight = currentTime.getHours() * 60 + currentTime.getMinutes();
+  const prayerScheduleItems = [
+    { id: 'fajr', name: "Fajr", urdu: "فجر", time: prayerTimes.fajr, mins: parseTimeToMinutes(prayerTimes.fajr), hasAdhan: true },
+    { id: 'sunrise', name: "Sunrise", urdu: "طلوع آفتاب", time: prayerTimes.sunrise, mins: parseTimeToMinutes(prayerTimes.sunrise), hasAdhan: false },
+    { id: 'dhuhr', name: "Dhuhr", urdu: "ظہر", time: prayerTimes.dhuhr, mins: parseTimeToMinutes(prayerTimes.dhuhr), hasAdhan: true },
+    { id: 'asr', name: "Asr", urdu: "عصر", time: prayerTimes.asr, mins: parseTimeToMinutes(prayerTimes.asr), hasAdhan: true },
+    { id: 'maghrib', name: "Maghrib", urdu: "مغرب", time: prayerTimes.maghrib, mins: parseTimeToMinutes(prayerTimes.maghrib), hasAdhan: true },
+    { id: 'isha', name: "Isha", urdu: "عشاء", time: prayerTimes.isha, mins: parseTimeToMinutes(prayerTimes.isha), hasAdhan: true },
+  ];
+
+  let currentActivePrayer = prayerScheduleItems[prayerScheduleItems.length - 1];
+  let upcomingPrayer = prayerScheduleItems[0];
+
+  for (let i = 0; i < prayerScheduleItems.length; i++) {
+    if (curMinutesFromMidnight >= prayerScheduleItems[i].mins) {
+      currentActivePrayer = prayerScheduleItems[i];
+      upcomingPrayer = prayerScheduleItems[(i + 1) % prayerScheduleItems.length];
+    } else {
+      upcomingPrayer = prayerScheduleItems[i];
+      break;
+    }
+  }
+
+  let remainingMinutes = upcomingPrayer.mins - curMinutesFromMidnight;
+  if (remainingMinutes < 0) remainingMinutes += 24 * 60;
+  const remHours = Math.floor(remainingMinutes / 60);
+  const remMins = remainingMinutes % 60;
 
   return (
     <div className="space-y-12 pb-16">
@@ -195,22 +330,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
           </div>
 
-          {/* Right Column: 3D Quran on Wooden Rihal (Exact Image Match) */}
+          {/* Right Column: 3D Quran on Wooden Rihal with 3-Second Auto Page Flip */}
           <div className="lg:col-span-5 flex justify-center items-center">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="relative w-72 sm:w-88 md:w-96 max-w-full"
-            >
-              <div className="absolute inset-0 bg-emerald-300/20 rounded-full blur-2xl -z-10" />
-              <img
-                src="/src/assets/images/quran_rihal_stand_1789811118145.jpg"
-                alt="Holy Quran on carved wooden Rihal stand"
-                referrerPolicy="no-referrer"
-                className="w-full h-auto object-contain rounded-2xl drop-shadow-2xl animate-float"
-              />
-            </motion.div>
+            <QuranPageFlipper />
           </div>
         </div>
       </section>
@@ -385,14 +507,14 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
       </section>
 
-      {/* 3. Islam360 Core Features Showcase (Light Theme Grid) */}
+      {/* 3. IslamicPath Core Features Showcase (Light Theme Grid) */}
       <section className="space-y-6 pt-6">
         <div className="text-center space-y-2">
           <span className="text-xs font-bold text-[#2e7d32] tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             Comprehensive Digital Ecosystem
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
-            Explore Islam360 Features
+            Explore IslamicPath Features
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
             Everything you need for authentic Islamic learning, daily worship, and spiritual growth in one platform.
@@ -563,27 +685,36 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
       </section>
 
-      {/* 4. Live Salah Timetable Widget */}
-      <section className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      {/* 4. Live Salah Timetable Widget with Automatic Adhan Broadcast */}
+      <section className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-5">
+        {/* Header and Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center space-x-3">
-            <div className="p-3 rounded-2xl bg-emerald-50 text-[#2e7d32] border border-emerald-200">
+            <div className="p-3 rounded-2xl bg-emerald-50 text-[#2e7d32] border border-emerald-200 relative">
               <Clock className="w-6 h-6" />
+              {isPlayingAdhan && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+              )}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#111827] flex items-center space-x-2">
-                <span>Today's Prayer Schedule</span>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-lg font-bold text-[#111827]">
+                  Today's Prayer Schedule
+                </h2>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-[#2e7d32] font-urdu">
                   مواقيت الصلاة
                 </span>
-              </h2>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-mono font-bold">
+                  {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                </span>
+              </div>
               <p className="text-xs text-slate-500">
-                Calculated solar timings with real Adhan audio broadcast
+                Calculated solar timings with real automatic Adhan audio broadcast
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             {/* City Selector */}
             <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700">
               <MapPin className="w-4 h-4 text-[#2e7d32]" />
@@ -603,54 +734,240 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               </select>
             </div>
 
-            {/* Adhan Audio */}
+            {/* Adhan Voice Selector */}
+            <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
+              <Radio className="w-3.5 h-3.5 text-emerald-600" />
+              <select
+                value={selectedVoice}
+                onChange={(e) => {
+                  setSelectedVoice(e.target.value);
+                  adhanPlayer.setVoice(e.target.value);
+                }}
+                className="bg-transparent border-none focus:outline-none text-[#111827] font-medium text-xs cursor-pointer"
+                title="Select Adhan Mu'adhin Voice"
+              >
+                {ADHAN_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Auto-Adhan Toggle Button */}
             <button
-              onClick={toggleAdhan}
-              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 border transition-all ${
-                isPlayingAdhan
-                  ? 'bg-amber-500 text-white border-amber-600'
-                  : 'bg-[#2e7d32] text-white border-[#246728] hover:bg-[#256629]'
+              onClick={toggleAutoAdhan}
+              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 border transition-all cursor-pointer ${
+                autoAdhanEnabled
+                  ? 'bg-emerald-50 border-emerald-300 text-[#2e7d32] shadow-sm'
+                  : 'bg-slate-100 border-slate-300 text-slate-500'
               }`}
+              title="Toggle automatic Adhan when prayer time arrives"
             >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span>{isPlayingAdhan ? 'Pause Adhan' : 'Listen Adhan'}</span>
+              <div className="relative flex items-center justify-center">
+                {autoAdhanEnabled ? (
+                  <Bell className="w-3.5 h-3.5 text-[#2e7d32]" />
+                ) : (
+                  <BellOff className="w-3.5 h-3.5 text-slate-400" />
+                )}
+                {autoAdhanEnabled && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#2e7d32] rounded-full animate-pulse" />
+                )}
+              </div>
+              <span>{autoAdhanEnabled ? 'Auto Adhan: ON' : 'Auto Adhan: OFF'}</span>
             </button>
+
+            {/* Manual Test / Listen Adhan Button */}
+            {isPlayingAdhan ? (
+              <button
+                onClick={stopAdhan}
+                className="px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 shadow-sm transition-all cursor-pointer"
+              >
+                <Pause className="w-3.5 h-3.5" />
+                <span>Stop Adhan</span>
+              </button>
+            ) : (
+              <button
+                onClick={triggerTestAdhan}
+                className="px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 bg-[#2e7d32] hover:bg-[#256629] text-white border border-[#246728] shadow-sm transition-all cursor-pointer"
+                title="Play Adhan sound immediately"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>Test Adhan Voice</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* 6 Times Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-          {[
-            { name: "Fajr", urdu: "فجر", time: prayerTimes.fajr },
-            { name: "Sunrise", urdu: "طلوع آفتاب", time: prayerTimes.sunrise },
-            { name: "Dhuhr", urdu: "ظہر", time: prayerTimes.dhuhr },
-            { name: "Asr", urdu: "عصر", time: prayerTimes.asr },
-            { name: "Maghrib", urdu: "مغرب", time: prayerTimes.maghrib },
-            { name: "Isha", urdu: "عشاء", time: prayerTimes.isha },
-          ].map((p, idx) => (
-            <div
-              key={idx}
-              className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-center hover:border-[#2e7d32] hover:bg-emerald-50/50 transition-colors"
-            >
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                {p.name}
-              </span>
-              <span className="text-xs text-[#2e7d32] font-urdu block -mt-0.5">
-                {p.urdu}
-              </span>
-              <span className="text-base font-extrabold text-[#111827] mt-1 block">
-                {p.time}
-              </span>
+        {/* Temporary Notice Toast */}
+        {testNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-4 py-2 rounded-xl bg-emerald-100/80 border border-emerald-300 text-[#1b5e20] text-xs font-semibold flex items-center space-x-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-[#2e7d32]" />
+            <span>{testNotice}</span>
+          </motion.div>
+        )}
+
+        {/* Active Adhan Live Audio Broadcast Banner */}
+        {isPlayingAdhan && activeAdhanInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1b4324] via-[#24572f] to-[#1e4826] p-4 text-white shadow-lg border border-emerald-600 space-y-3"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                {/* Equalizer Sound Waves */}
+                <div className="flex items-end space-x-1 h-7 px-2 py-1 bg-black/20 rounded-lg border border-emerald-400/30">
+                  <span className="w-1 bg-emerald-300 rounded-full animate-[pulse_0.6s_ease-in-out_infinite] h-5" />
+                  <span className="w-1 bg-emerald-300 rounded-full animate-[pulse_0.4s_ease-in-out_infinite_0.1s] h-6" />
+                  <span className="w-1 bg-emerald-300 rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.2s] h-4" />
+                  <span className="w-1 bg-emerald-300 rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.3s] h-7" />
+                  <span className="w-1 bg-emerald-300 rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.4s] h-3" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-wider border border-emerald-400/30">
+                      Live Adhan Broadcast
+                    </span>
+                    <span className="text-xs font-urdu text-emerald-300 font-bold">
+                      اذان کا وقت: نمازِ {activeAdhanInfo.urdu}
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-white mt-0.5">
+                    Now Playing {activeAdhanInfo.name} Adhan ({ADHAN_VOICES.find(v => v.id === selectedVoice)?.name})
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowDuaAfterAdhan(!showDuaAfterAdhan)}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 text-xs font-medium border border-white/15 transition-colors cursor-pointer"
+                >
+                  {showDuaAfterAdhan ? 'Hide Dua' : 'Dua After Adhan'}
+                </button>
+                <button
+                  onClick={stopAdhan}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-500/90 hover:bg-rose-600 text-white text-xs font-bold transition-colors cursor-pointer flex items-center space-x-1"
+                >
+                  <VolumeX className="w-3.5 h-3.5" />
+                  <span>Stop</span>
+                </button>
+              </div>
             </div>
-          ))}
+
+            {/* Dua after Adhan drop-down */}
+            {showDuaAfterAdhan && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="pt-3 border-t border-emerald-700/60 text-xs space-y-1 bg-black/15 p-3 rounded-xl"
+              >
+                <p className="font-urdu text-base text-amber-200 text-right leading-loose font-medium" dir="rtl">
+                  اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ، وَالصَّلَاةِ الْقَائِمَةِ، آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ، وَابْعَثْهُ مَقَامًا مَحْمُودًا الَّذِي وَعَدْتَهُ
+                </p>
+                <p className="text-emerald-100/90 text-right font-urdu text-xs" dir="rtl">
+                  اے اللہ! اس کامل پکار اور قائم ہونے والی نماز کے رب! محمد ﷺ کو وسیلہ اور فضیلت عطا فرما اور انہیں اس مقامِ محمود پر فائز فرما جس کا تو نے ان سے وعدہ کیا ہے۔
+                </p>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* 6 Times Grid with Active Indicator & Click-to-Play */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          {prayerScheduleItems.map((p) => {
+            const isCurrent = currentActivePrayer.id === p.id;
+            const isPlayingThisPrayer = isPlayingAdhan && activeAdhanInfo?.name === p.name;
+
+            return (
+              <div
+                key={p.id}
+                onClick={() => {
+                  if (p.hasAdhan) {
+                    playAdhan(p.name, p.urdu);
+                  }
+                }}
+                className={`relative p-3.5 rounded-2xl border transition-all select-none ${
+                  p.hasAdhan ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+                } ${
+                  isPlayingThisPrayer
+                    ? 'bg-amber-50/80 border-amber-400 shadow-md ring-2 ring-amber-300'
+                    : isCurrent
+                    ? 'bg-emerald-50/80 border-[#2e7d32] shadow-sm ring-2 ring-emerald-200'
+                    : 'bg-slate-50 border-slate-200/80 hover:border-slate-300 hover:bg-slate-100/60'
+                }`}
+                title={p.hasAdhan ? `Click to listen ${p.name} Adhan` : p.name}
+              >
+                {/* Top Badge: Active or Playing */}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    {p.name}
+                  </span>
+                  {isPlayingThisPrayer ? (
+                    <span className="flex items-center space-x-1 text-[10px] font-bold text-amber-700 bg-amber-200/70 px-1.5 py-0.5 rounded-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
+                      <span>Adhan</span>
+                    </span>
+                  ) : isCurrent ? (
+                    <span className="text-[10px] font-bold text-[#2e7d32] bg-emerald-100 px-1.5 py-0.5 rounded-md">
+                      Active
+                    </span>
+                  ) : null}
+                </div>
+
+                <span className="text-xs text-[#2e7d32] font-urdu block -mt-0.5 font-semibold">
+                  {p.urdu}
+                </span>
+
+                <span className="text-base font-extrabold text-[#111827] mt-1.5 block tracking-tight">
+                  {p.time}
+                </span>
+
+                {/* Footer hint */}
+                {p.hasAdhan && (
+                  <div className="mt-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-[10px] text-slate-600">
+                    <span className="flex items-center space-x-1">
+                      <Volume2 className="w-3 h-3 text-[#2e7d32]" />
+                      <span>Adhan</span>
+                    </span>
+                    <span className="text-[9px] text-[#2e7d32] font-medium">Click</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Next Prayer Countdown and Auto-Adhan Status Footer */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 border-t border-slate-100">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 rounded-full bg-[#2e7d32] animate-pulse" />
+            <span>
+              اگلی نماز: <strong className="text-[#111827]">{upcomingPrayer.urdu} ({upcomingPrayer.name})</strong> وقت: <strong>{upcomingPrayer.time}</strong> (باقی وقت: {remHours > 0 ? `${remHours} گھنٹے ` : ''}{remMins} منٹ)
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2 text-[11px] text-slate-500">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#2e7d32]" />
+            <span>
+              {autoAdhanEnabled
+                ? 'خودکار اذان کا الرٹ فعال ہے (Auto Adhan will sound automatically at prayer time)'
+                : 'خودکار اذان بند ہے (Auto Adhan is currently disabled)'}
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* 5. Islam360 AI Search Banner */}
+      {/* 5. IslamicPath AI Search Banner */}
       <section className="rounded-3xl bg-gradient-to-r from-[#edf7f0] to-[#e8f5e9] border border-emerald-200 p-8 text-center space-y-4 shadow-sm">
         <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white border border-emerald-300 text-[#2e7d32] text-xs font-bold">
           <Bot className="w-4 h-4 text-[#2e7d32]" />
-          <span>Ask Anything in Islam360 AI Search</span>
+          <span>Ask Anything in IslamicPath AI Search</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
           Have a Question About Quran, Hadith, or Fiqh?
@@ -671,6 +988,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           </button>
         </div>
       </section>
+
+      {/* 6. What People Say About IslamPath? (Scholars & Teachers Endorsements) */}
+      <ScholarsTestimonials />
+
+      {/* 7. Appreciated by Top Scholars (Continuous Left Flow Slider with Hover Pause) */}
+      <ScholarsMarquee />
     </div>
   );
 };

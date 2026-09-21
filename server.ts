@@ -33,10 +33,10 @@ async function startServer() {
 
   // Health check
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", app: "Islam360" });
+    res.json({ status: "ok", app: "IslamicPath" });
   });
 
-  // Islam360 AI Search & Ask Mufti Endpoint
+  // IslamicPath AI Search & Ask Mufti Endpoint
   app.post("/api/ask-islam", async (req, res) => {
     try {
       const { prompt, language = "ur-en" } = req.body;
@@ -57,7 +57,7 @@ async function startServer() {
         model: "gemini-3.8-flash",
         contents: prompt,
         config: {
-          systemInstruction: `You are Islam360 AI, an authentic Islamic search engine and scholarly knowledge assistant inspired by Islam360.
+          systemInstruction: `You are IslamicPath AI, an authentic Islamic search engine and scholarly knowledge assistant.
 Your goal is to provide authentic, respectful, and well-grounded answers strictly based on the Holy Quran and authentic Hadith (Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami at-Tirmidhi, Sunan an-Nasa'i, Sunan Ibn Majah).
 Format your answer clearly with Markdown:
 1. Core Islamic Ruling / Wisdom.
@@ -80,6 +80,69 @@ Always address the user with respect (Assalamu Alaikum) and write with clarity a
     }
   });
 
+  // Islamic Path Donation Notification Endpoint (Notifies inffo.ghulammustafa@gmail.com)
+  app.post("/api/donate", async (req, res) => {
+    try {
+      const {
+        donorEmail,
+        donorName = "Anonymous Donor",
+        amount,
+        currency = "USD",
+        paymentMethod = "card",
+        referenceId = `DON-${Date.now()}`
+      } = req.body;
+
+      if (!donorEmail || !amount) {
+        return res.status(400).json({ error: "Donor email and donation amount are required" });
+      }
+
+      console.log("==================================================");
+      console.log("💰 NEW DONATION ALERT FOR ISLAMIC PATH 💰");
+      console.log(`Recipient: inffo.ghulammustafa@gmail.com`);
+      console.log(`Donor Email: ${donorEmail}`);
+      console.log(`Donor Name: ${donorName}`);
+      console.log(`Amount: $${amount} ${currency}`);
+      console.log(`Payment Method: ${paymentMethod}`);
+      console.log(`Reference ID: ${referenceId}`);
+      console.log(`Timestamp: ${new Date().toLocaleString()}`);
+      console.log("==================================================");
+
+      // Outbound email relay to inffo.ghulammustafa@gmail.com (non-blocking)
+      fetch("https://formsubmit.co/ajax/inffo.ghulammustafa@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          _subject: `New Donation Alert: $${amount} USD from ${donorEmail} - Islamic Path`,
+          "Donor Email": donorEmail,
+          "Donor Name": donorName,
+          "Donation Amount": `$${amount} ${currency}`,
+          "Payment Method Selected": paymentMethod.toUpperCase(),
+          "Reference ID": referenceId,
+          "Platform": "Islamic Path Web Portal",
+          "Recipient Email": "inffo.ghulammustafa@gmail.com",
+          "Date & Time": new Date().toLocaleString()
+        })
+      }).catch((relayErr) => {
+        console.warn("Outbound relay notice:", relayErr?.message || relayErr);
+      });
+
+      return res.json({
+        success: true,
+        message: "Donation details processed and notification sent to inffo.ghulammustafa@gmail.com",
+        referenceId,
+        donorEmail,
+        amount,
+        paymentMethod
+      });
+    } catch (err: any) {
+      console.error("Donation handling error:", err);
+      return res.status(500).json({ error: "Failed to process donation notification" });
+    }
+  });
+
   // Vite middleware for development vs Static in Production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -96,7 +159,7 @@ Always address the user with respect (Assalamu Alaikum) and write with clarity a
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Islam360 Server running on http://0.0.0.0:${PORT}`);
+    console.log(`IslamicPath Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -74,7 +74,7 @@ export const AiSearchSection: React.FC = () => {
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-[#111827] flex items-center justify-center space-x-3">
           <Bot className="w-9 h-9 text-[#2e7d32]" />
-          <span>Islam360 AI Search &amp; Mufti</span>
+          <span>IslamicPath AI Search &amp; Mufti</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
           Ask any question regarding the Holy Quran, authentic Hadith collections, Islamic jurisprudence (Fiqh), Duas, or daily life guidance.
@@ -179,7 +179,7 @@ export const AiSearchSection: React.FC = () => {
                 <Bot className="w-5 h-5 text-[#2e7d32]" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#111827]">Islam360 AI Response</h3>
+                <h3 className="text-sm font-bold text-[#111827]">IslamicPath AI Response</h3>
                 <span className="text-[11px] text-[#2e7d32] font-semibold">Verified Islamic Knowledge</span>
               </div>
             </div>

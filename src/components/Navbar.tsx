@@ -48,30 +48,40 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'duas' as ActiveTab, label: 'Masnoon Duas', urdu: 'مسنون دعائیں', desc: 'Authentic daily supplications & Azkar', icon: Heart },
     { id: 'names' as ActiveTab, label: '99 Names of Allah', urdu: 'اسماء الحسنیٰ', desc: 'Asma-ul-Husna & Holy Prophet (ﷺ) names', icon: Sparkles },
     { id: 'zakat' as ActiveTab, label: 'Zakat Calculator', urdu: 'زکوٰۃ کیلکولیٹر', desc: 'Nisab evaluation for gold, silver & wealth', icon: Calculator },
-    { id: 'ai-search' as ActiveTab, label: 'Islam360 AI Search', urdu: 'اسلام 360 AI', desc: 'Smart AI Mufti powered by verified sources', icon: Bot },
+    { id: 'ai-search' as ActiveTab, label: 'IslamicPath AI Search', urdu: 'اسلامک پاتھ AI', desc: 'Smart AI Mufti powered by verified sources', icon: Bot },
   ];
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Brand Logo - Islam360 Icon from the uploaded image */}
+          {/* Brand Logo - Islamic Path */}
           <div 
             id="brand-logo"
             onClick={() => setActiveTab('home')}
             className="flex items-center space-x-3 cursor-pointer group select-none"
           >
-            {/* Authentic Islam360 App Icon Badge */}
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-[#60af25] to-[#48a124] shadow-md flex flex-col items-center justify-center text-white border border-[#449921] group-hover:scale-105 transition-transform duration-200">
-              <span className="font-arabic text-sm leading-none font-bold pt-0.5">إسلام</span>
-              <span className="text-[11px] font-black tracking-tight leading-none">360</span>
+            {/* Islamic Path Logo Image */}
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md border-2 border-emerald-500/40 group-hover:border-[#2e7d32] transition-all bg-emerald-50 shrink-0">
+              <img
+                src="/images/logo.jpg"
+                alt="Islamic Path Logo"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg') {
+                    target.src = 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg';
+                  }
+                }}
+              />
             </div>
             <div className="hidden sm:block">
               <span className="text-xl font-black tracking-tight text-[#111827]">
-                Islam<span className="text-[#2e7d32]">360</span>
+                Islamic <span className="text-[#2e7d32]">Path</span>
               </span>
               <p className="text-[11px] text-slate-500 font-medium">
-                World's 1st Islamic Search Engine
+                شاہراہِ اسلام • Quran, Hadith &amp; Guidance
               </p>
             </div>
           </div>
@@ -199,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="p-2.5 rounded-xl hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
                     >
-                      About Islam360
+                      About IslamicPath
                     </div>
                     <div 
                       onClick={() => {
@@ -337,7 +347,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className="p-3 rounded-xl bg-[#e8f5e9] text-left text-xs font-bold text-[#2e7d32]"
               >
-                Islam360 AI Mufti
+                IslamicPath AI Mufti
               </button>
             </div>
 

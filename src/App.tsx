@@ -55,7 +55,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#ffffff] text-slate-800 flex flex-col selection:bg-[#2e7d32] selection:text-white font-sans relative">
-      {/* Navbar with Islam360 Branding */}
+      {/* Navbar with IslamicPath Branding */}
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -93,7 +93,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Islam360 Modern Clean Footer */}
+      {/* IslamicPath Modern Clean Footer */}
       <footer className="bg-[#f8faf9] border-t border-slate-200/80 pt-16 pb-12 mt-16 text-slate-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -103,19 +103,29 @@ export default function App() {
                 onClick={() => setActiveTab('home')}
                 className="flex items-center space-x-3 cursor-pointer group select-none"
               >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#60af25] to-[#48a124] shadow-sm flex flex-col items-center justify-center text-white border border-[#449921]">
-                  <span className="font-arabic text-sm leading-none font-bold pt-0.5">إسلام</span>
-                  <span className="text-[11px] font-black tracking-tight leading-none">360</span>
+                <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm border-2 border-emerald-500/40 group-hover:border-[#2e7d32] transition-all bg-emerald-50 shrink-0">
+                  <img
+                    src="/images/logo.jpg"
+                    alt="Islamic Path Logo"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg') {
+                        target.src = 'https://i.pinimg.com/736x/ba/5c/56/ba5c560e399705657557acc0578e6f3b.jpg';
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <span className="text-xl font-black text-[#111827]">
-                    Islam<span className="text-[#2e7d32]">360</span>
+                    Islamic <span className="text-[#2e7d32]">Path</span>
                   </span>
-                  <p className="text-[11px] text-slate-500 font-medium">World's 1st Islamic Search Engine</p>
+                  <p className="text-[11px] text-slate-500 font-medium">شاہراہِ اسلام • Quran, Hadith &amp; Guidance</p>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Islam360 empowers Muslims worldwide through authentic Quranic texts, Sahih Hadith databases, solar prayer calculations, and intelligent Islamic search.
+                Islamic Path empowers Muslims worldwide through authentic Quranic texts, Sahih Hadith databases, solar prayer calculations, and intelligent Islamic search.
               </p>
               <div className="flex items-center space-x-2 pt-1">
                 <button
@@ -206,7 +216,7 @@ export default function App() {
                 <li>
                   <button onClick={() => setActiveTab('ai-search')} className="hover:text-[#2e7d32] transition-colors flex items-center space-x-1 font-semibold text-[#2e7d32]">
                     <Bot className="w-3.5 h-3.5 text-[#2e7d32]" />
-                    <span>Islam360 AI Search Engine</span>
+                    <span>IslamicPath AI Search Engine</span>
                   </button>
                 </li>
                 <li>
@@ -231,7 +241,7 @@ export default function App() {
           {/* Bottom copyright & blessings */}
           <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <p>
-              © {new Date().getFullYear()} Islam360. All rights reserved. Shariah-verified platform.
+              © {new Date().getFullYear()} Islamic Path. All rights reserved. Shariah-verified platform.
             </p>
             <p className="text-[#2e7d32] font-arabic text-base">
               رَبَّنَا تَقَبَّلْ مِنَّا إِنَّكَ أَنْتَ السَّمِيعُ الْعَلِيمُ

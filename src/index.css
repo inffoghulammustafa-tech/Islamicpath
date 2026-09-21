@@ -27,7 +27,7 @@
   line-height: 2.3;
 }
 
-/* Islam 360 Light Theme Card Style */
+/* IslamicPath Light Theme Card Style */
 .islamic-card {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
@@ -57,6 +57,28 @@
 
 .animate-float {
   animation: float-gentle 4.5s infinite ease-in-out;
+}
+
+/* Continuous smooth left-flow Marquee with hover pause */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-left:hover,
+.pause-on-hover:hover .animate-marquee-left {
+  animation-play-state: paused !important;
 }
 
 /* Custom scrollbars for clean light UI */
