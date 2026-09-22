@@ -17,7 +17,7 @@ const QURAN_PAGES: QuranPageItem[] = [
     surahNameAr: "سُورَةُ الْفَاتِحَةِ وَالْبَقَرَة",
     surahNameEn: "Surah Al-Fatihah & Al-Baqarah",
     pageNumber: "١",
-    imageSrc: "/src/assets/images/quran_rihal_stand_1789811118145.jpg",
+    imageSrc: "/images/quran_rihal_stand_1789811118145.jpg",
     description: "آغاز قرآن مجید - ام الکتاب"
   },
   {
@@ -25,7 +25,7 @@ const QURAN_PAGES: QuranPageItem[] = [
     surahNameAr: "سُورَةُ يس",
     surahNameEn: "Surah Ya-Sin",
     pageNumber: "٤٤٠",
-    imageSrc: "/src/assets/images/quran_page_yasin_1789989367866.jpg",
+    imageSrc: "/images/quran_page_yasin_1789989367866.jpg",
     description: "قلب القرآن - فضائل و برکات"
   },
   {
@@ -33,7 +33,7 @@ const QURAN_PAGES: QuranPageItem[] = [
     surahNameAr: "سُورَةُ الرَّحْمَٰن",
     surahNameEn: "Surah Ar-Rahman",
     pageNumber: "٥٣١",
-    imageSrc: "/src/assets/images/quran_page_rahman_1789989386729.jpg",
+    imageSrc: "/images/quran_page_rahman_1789989386729.jpg",
     description: "عروس القرآن - فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ"
   },
   {
@@ -41,7 +41,7 @@ const QURAN_PAGES: QuranPageItem[] = [
     surahNameAr: "سُورَةُ الْمُلْك",
     surahNameEn: "Surah Al-Mulk",
     pageNumber: "٥٦٢",
-    imageSrc: "/src/assets/images/quran_page_mulk_1789989402876.jpg",
+    imageSrc: "/images/quran_page_mulk_1789989402876.jpg",
     description: "المنجية والواقية من عذاب القبر"
   }
 ];
@@ -89,8 +89,15 @@ export const QuranPageFlipper: React.FC = () => {
           key={`next-${nextPage.id}`}
           src={nextPage.imageSrc}
           alt={nextPage.surahNameEn}
+          loading="eager"
           referrerPolicy="no-referrer"
           className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.src.includes('unsplash')) {
+              target.src = 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=800&q=80';
+            }
+          }}
         />
 
         {/* 
@@ -114,8 +121,15 @@ export const QuranPageFlipper: React.FC = () => {
             <img
               src={currentPage.imageSrc}
               alt={currentPage.surahNameEn}
+              loading="eager"
               referrerPolicy="no-referrer"
               className="w-full h-full object-contain pointer-events-none"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes('unsplash')) {
+                  target.src = 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=800&q=80';
+                }
+              }}
             />
 
             {/* Page curl crease shadow traveling across the pages */}

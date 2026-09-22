@@ -361,10 +361,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             {/* Top Protruding Circular Emblem */}
             <div className="absolute -top-9 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-[#1b4d24] border-4 border-white shadow-lg overflow-hidden flex items-center justify-center z-20">
               <img
-                src="/src/assets/images/hadith_book_emblem_1789811139492.jpg"
+                src="/images/hadith_book_emblem_1789811139492.jpg"
                 alt="Hadith of the Day Icon"
+                loading="eager"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('logo.jpg')) {
+                    target.src = '/images/logo.jpg';
+                  }
+                }}
               />
             </div>
 
@@ -437,10 +444,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             {/* Top Protruding Circular Emblem */}
             <div className="absolute -top-9 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-[#1b4d24] border-4 border-white shadow-lg overflow-hidden flex items-center justify-center z-20">
               <img
-                src="/src/assets/images/ayat_quran_emblem_1789811155397.jpg"
+                src="/images/ayat_quran_emblem_1789811155397.jpg"
                 alt="Ayat of the Day Icon"
+                loading="eager"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('logo.jpg')) {
+                    target.src = '/images/logo.jpg';
+                  }
+                }}
               />
             </div>
 
