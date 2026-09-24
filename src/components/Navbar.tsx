@@ -11,7 +11,6 @@ import {
   X, 
   Search, 
   BookmarkCheck, 
-  Bot, 
   ChevronDown,
   Download,
   DollarSign,
@@ -37,7 +36,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [featuresDropdownOpen, setFeaturesDropdownOpen] = useState(false);
-  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
 
   const featureItems = [
     { id: 'quran' as ActiveTab, label: 'Holy Quran', urdu: 'القرآن الكريم', desc: '114 Surahs with audio & multi-language translation', icon: BookOpen },
@@ -48,12 +46,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'duas' as ActiveTab, label: 'Masnoon Duas', urdu: 'مسنون دعائیں', desc: 'Authentic daily supplications & Azkar', icon: Heart },
     { id: 'names' as ActiveTab, label: '99 Names of Allah', urdu: 'اسماء الحسنیٰ', desc: 'Asma-ul-Husna & Holy Prophet (ﷺ) names', icon: Sparkles },
     { id: 'zakat' as ActiveTab, label: 'Zakat Calculator', urdu: 'زکوٰۃ کیلکولیٹر', desc: 'Nisab evaluation for gold, silver & wealth', icon: Calculator },
-    { id: 'ai-search' as ActiveTab, label: 'IslamicPath AI Search', urdu: 'اسلامک پاتھ AI', desc: 'Smart AI Mufti powered by verified sources', icon: Bot },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_2px_15px_rgba(0,0,0,0.03)] relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex items-center justify-between h-20">
           {/* Brand Logo - Islamic Path */}
           <div 
@@ -62,11 +59,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center space-x-3 cursor-pointer group select-none"
           >
             {/* Islamic Path Logo Image */}
-            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md border-2 border-emerald-500/40 group-hover:border-[#2e7d32] transition-all bg-emerald-50 shrink-0">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-sm border border-slate-200 group-hover:border-[#2e7d32] transition-all bg-emerald-50 shrink-0">
               <img
                 src="/images/logo.jpg"
                 alt="Islamic Path Logo"
                 referrerPolicy="no-referrer"
+                loading="eager"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 onError={(e) => {
                   const target = e.currentTarget;
@@ -181,67 +180,40 @@ export const Navbar: React.FC<NavbarProps> = ({
               Publications
             </button>
 
-            {/* Company Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setCompanyDropdownOpen(true)}
-              onMouseLeave={() => setCompanyDropdownOpen(false)}
+            {/* About Page Link */}
+            <button
+              id="nav-about-btn"
+              onClick={() => setActiveTab('about')}
+              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'about'
+                  ? 'text-[#2e7d32] font-bold bg-[#e8f5e9] shadow-xs'
+                  : 'text-slate-700 hover:text-[#2e7d32] hover:bg-slate-50'
+              }`}
             >
-              <button
-                className="px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-[#2e7d32] transition-colors flex items-center space-x-1"
-              >
-                <span>Company</span>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </button>
+              About
+            </button>
 
-              <AnimatePresence>
-                {companyDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute top-full left-0 w-56 bg-white rounded-2xl p-2 shadow-xl border border-slate-100 z-50 space-y-1"
-                  >
-                    <div 
-                      onClick={() => {
-                        setActiveTab('home');
-                        setCompanyDropdownOpen(false);
-                      }}
-                      className="p-2.5 rounded-xl hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
-                    >
-                      About IslamicPath
-                    </div>
-                    <div 
-                      onClick={() => {
-                        if (onOpenDonate) onOpenDonate();
-                        setCompanyDropdownOpen(false);
-                      }}
-                      className="p-2.5 rounded-xl hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
-                    >
-                      Support &amp; Donation
-                    </div>
-                    <div 
-                      onClick={() => {
-                        setActiveTab('ai-search');
-                        setCompanyDropdownOpen(false);
-                      }}
-                      className="p-2.5 rounded-xl hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
-                    >
-                      Islamic Research &amp; AI
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Contact Page Link */}
+            <button
+              id="nav-contact-btn"
+              onClick={() => setActiveTab('contact')}
+              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'contact'
+                  ? 'text-[#2e7d32] font-bold bg-[#e8f5e9] shadow-xs'
+                  : 'text-slate-700 hover:text-[#2e7d32] hover:bg-slate-50'
+              }`}
+            >
+              Contact
+            </button>
           </nav>
 
-          {/* Right Buttons: DONATE and Download the App (Exact styling from image) */}
+          {/* Right Buttons: DONATE and Download the App */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* DONATE Button - Solid Green Pill */}
+            {/* DONATE Button - Solid Green */}
             <button
               id="header-donate-btn"
               onClick={onOpenDonate}
-              className="px-5 sm:px-6 py-2 rounded-full bg-[#287d46] hover:bg-[#20683a] text-white font-bold text-xs sm:text-sm tracking-wide shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+              className="px-5 sm:px-6 py-2 rounded-full bg-[#287d46] hover:bg-[#20683a] text-white font-bold text-xs sm:text-sm tracking-wide shadow-xs hover:shadow transition-all duration-200 cursor-pointer"
             >
               DONATE
             </button>
@@ -342,12 +314,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('ai-search');
+                  setActiveTab('about');
                   setMobileMenuOpen(false);
                 }}
-                className="p-3 rounded-xl bg-[#e8f5e9] text-left text-xs font-bold text-[#2e7d32]"
+                className={`p-3 rounded-xl text-left text-xs font-bold ${
+                  activeTab === 'about'
+                    ? 'bg-[#e8f5e9] text-[#2e7d32]'
+                    : 'bg-slate-50 hover:bg-[#e8f5e9] text-slate-700'
+                }`}
               >
-                IslamicPath AI Mufti
+                About IslamicPath (ہمارے بارے میں)
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('contact');
+                  setMobileMenuOpen(false);
+                }}
+                className={`p-3 rounded-xl text-left text-xs font-bold ${
+                  activeTab === 'contact'
+                    ? 'bg-[#e8f5e9] text-[#2e7d32]'
+                    : 'bg-slate-50 hover:bg-[#e8f5e9] text-slate-700'
+                }`}
+              >
+                Contact Us (رابطہ کریں)
               </button>
             </div>
 

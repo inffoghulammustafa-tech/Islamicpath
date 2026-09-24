@@ -4,6 +4,7 @@ interface NeonDualBorderBeamProps {
   borderRadius?: number; // default 16 for rounded-2xl
   duration?: number; // duration of 1 full loop in seconds (default 8s)
   isHovered?: boolean;
+  alwaysActive?: boolean;
 }
 
 /**
@@ -16,6 +17,7 @@ export const NeonDualBorderBeam: React.FC<NeonDualBorderBeamProps> = ({
   borderRadius = 16,
   duration = 7,
   isHovered = false,
+  alwaysActive = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -49,12 +51,15 @@ export const NeonDualBorderBeam: React.FC<NeonDualBorderBeamProps> = ({
       ? `M ${r} 0.5 H ${width - r} A ${r} ${r} 0 0 1 ${width - 0.5} ${r} V ${height - r} A ${r} ${r} 0 0 1 ${width - r} ${height - 0.5} H ${r} A ${r} ${r} 0 0 1 0.5 ${height - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0.5 Z`
       : '';
 
+  const isVisible = isHovered || alwaysActive;
+
   return (
     <div
       ref={containerRef}
       aria-hidden="true"
-      className={`absolute inset-0 pointer-events-none rounded-2xl overflow-visible z-10 transition-opacity duration-300 ${
-        isHovered ? 'opacity-100' : 'opacity-0'
+      style={{ borderRadius: `${r}px` }}
+      className={`absolute inset-0 pointer-events-none overflow-visible z-10 transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
       {width > 0 && height > 0 && pathD && (

@@ -7,7 +7,6 @@ import {
   Sparkles, 
   Heart, 
   Calculator, 
-  Bot, 
   Play, 
   Pause, 
   Volume2, 
@@ -24,7 +23,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
-  Smartphone
+  Smartphone,
+  Search
 } from 'lucide-react';
 import { ActiveTab, PrayerTimesData, CityLocation } from '../types';
 import { POPULAR_CITIES, calculatePrayerTimes } from '../data/prayerData';
@@ -92,6 +92,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const [copiedAyat, setCopiedAyat] = useState(false);
   const [isHadithHovered, setIsHadithHovered] = useState(false);
   const [isAyatHovered, setIsAyatHovered] = useState(false);
+  const [heroSearchQuery, setHeroSearchQuery] = useState('');
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
   // Exact Ayat: Surah al baqara [2-183]
@@ -254,10 +255,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
   return (
     <div className="space-y-12 pb-16">
-      {/* 1. Hero Section (Exact Match to Uploaded Screenshot) */}
+      {/* 1. Hero Section (World's 1st & Only Islamic Search Engine) */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#edf7f0] via-[#f3faf5] to-white px-6 sm:px-12 py-12 sm:py-16 border border-emerald-100 shadow-[0_4px_25px_rgba(0,0,0,0.02)]">
         {/* Soft background mint circle blur */}
-        <div className="absolute top-10 right-10 w-96 h-96 bg-[#d8f0e0]/50 rounded-full blur-3xl pointer-events-none -z-0" />
+        <div className="absolute top-10 right-10 w-96 h-96 bg-[#d8f0e0]/40 rounded-full blur-3xl pointer-events-none -z-0" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Typography & CTAs */}
@@ -273,8 +274,59 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
 
             <p className="text-slate-600 text-sm sm:text-base max-w-lg leading-relaxed">
-              A comprehensive Islamic app that empowers and connects Muslims globally.
+              A comprehensive Islamic app that empowers and connects Muslims globally through authentic Quranic verses, Sahih Hadith, and scholarly guidance.
             </p>
+
+            {/* Live Islamic Search Bar */}
+            <div className="pt-1 max-w-xl">
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (heroSearchQuery.trim()) {
+                    setActiveTab('quran');
+                  }
+                }}
+                className="relative flex items-center"
+              >
+                <Search className="w-5 h-5 text-[#2e7d32] absolute left-4 pointer-events-none" />
+                <input
+                  type="text"
+                  value={heroSearchQuery}
+                  onChange={(e) => setHeroSearchQuery(e.target.value)}
+                  placeholder="Search Quran Ayahs, Hadith, Duas, or Islamic Topics..."
+                  className="w-full pl-11 pr-28 py-3.5 rounded-full bg-white/95 backdrop-blur-sm border border-emerald-200/90 focus:border-[#2e7d32] focus:ring-2 focus:ring-emerald-500/20 text-sm shadow-sm outline-none transition-all placeholder:text-slate-400"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1.5 px-5 py-2 rounded-full bg-[#2e7d32] hover:bg-[#256629] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Quick Suggestion Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-2 text-xs text-slate-500">
+                <span className="font-semibold text-slate-400 text-[11px]">Popular:</span>
+                {[
+                  { label: 'Ayat-ul-Kursi', tab: 'quran' as ActiveTab },
+                  { label: 'Surah Yaseen', tab: 'quran' as ActiveTab },
+                  { label: 'Sahih Bukhari', tab: 'hadith' as ActiveTab },
+                  { label: 'Masnoon Duas', tab: 'duas' as ActiveTab },
+                  { label: 'Nisab Calculator', tab: 'zakat' as ActiveTab }
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      setHeroSearchQuery(item.label);
+                      setActiveTab(item.tab);
+                    }}
+                    className="px-2.5 py-0.5 rounded-full bg-white/80 hover:bg-emerald-100 hover:text-[#1b5e20] text-slate-600 text-[11px] border border-slate-200/80 transition-colors cursor-pointer"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -977,37 +1029,15 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
       </section>
 
-      {/* 5. IslamicPath AI Search Banner */}
-      <section className="rounded-3xl bg-gradient-to-r from-[#edf7f0] to-[#e8f5e9] border border-emerald-200 p-8 text-center space-y-4 shadow-sm">
-        <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white border border-emerald-300 text-[#2e7d32] text-xs font-bold">
-          <Bot className="w-4 h-4 text-[#2e7d32]" />
-          <span>Ask Anything in IslamicPath AI Search</span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
-          Have a Question About Quran, Hadith, or Fiqh?
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto">
-          Our authentic AI search engine answers with references from Sahih Bukhari, Sahih Muslim, and classical Tafseer.
-        </p>
-
-        <div className="pt-2 max-w-xl mx-auto">
-          <button
-            onClick={() => setActiveTab('ai-search')}
-            className="w-full py-4 px-6 rounded-2xl bg-white border-2 border-emerald-500 hover:border-[#2e7d32] text-slate-500 hover:text-slate-800 text-sm font-medium flex items-center justify-between shadow-sm cursor-pointer transition-all"
-          >
-            <span>Ask: "What does Quran say about patience (Sabr)?"</span>
-            <span className="px-4 py-2 rounded-xl bg-[#2e7d32] text-white font-bold text-xs">
-              Search Now
-            </span>
-          </button>
-        </div>
-      </section>
-
-      {/* 6. What People Say About IslamPath? (Scholars & Teachers Endorsements) */}
-      <ScholarsTestimonials />
+      {/* What People Say About IslamPath? (Scholars & Teachers Endorsements) */}
+      <div className="optimize-render">
+        <ScholarsTestimonials />
+      </div>
 
       {/* 7. Appreciated by Top Scholars (Continuous Left Flow Slider with Hover Pause) */}
-      <ScholarsMarquee />
+      <div className="optimize-render">
+        <ScholarsMarquee />
+      </div>
     </div>
   );
 };

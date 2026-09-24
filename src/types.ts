@@ -8,7 +8,8 @@ export type ActiveTab =
   | 'duas'
   | 'names'
   | 'zakat'
-  | 'ai-search';
+  | 'about'
+  | 'contact';
 
 export interface SurahMeta {
   number: number;

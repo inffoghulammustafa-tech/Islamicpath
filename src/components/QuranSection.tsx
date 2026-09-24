@@ -60,6 +60,12 @@ export const QuranSection: React.FC = () => {
     };
   }, [selectedSurah]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [selectedSurah.number]);
+
   const playAyahAudio = (ayahNumberInSurah: number, audioUrl?: string) => {
     if (!audioUrl) return;
 

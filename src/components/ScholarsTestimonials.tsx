@@ -115,6 +115,8 @@ export const ScholarsTestimonials: React.FC = () => {
                         <img
                           src={scholar.localImageUrl || scholar.imageUrl}
                           alt={scholar.name}
+                          loading="lazy"
+                          decoding="async"
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {

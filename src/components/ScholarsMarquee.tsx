@@ -41,12 +41,12 @@ export const ScholarsMarquee: React.FC = () => {
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-white via-white/80 to-transparent z-20" />
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-white via-white/80 to-transparent z-20" />
 
-        {/* Continuous Marquee Track */}
-        <div className="animate-marquee-left flex items-center space-x-5 py-2">
+        {/* Continuous Marquee Track with GPU acceleration */}
+        <div className="animate-marquee-left flex items-center space-x-5 py-2 gpu-accelerated">
           {marqueeItems.map((scholar, idx) => (
             <div
               key={`${scholar.id}-${idx}`}
-              className="group relative flex-shrink-0 w-72 sm:w-80 bg-white rounded-2xl p-4 border border-slate-200/90 hover:border-[#2e7d32] shadow-xs hover:shadow-xl transition-all duration-300 flex items-center space-x-4 cursor-pointer hover:-translate-y-1"
+              className="group relative flex-shrink-0 w-72 sm:w-80 bg-white rounded-2xl p-4 border border-slate-200/90 hover:border-[#2e7d32] shadow-xs hover:shadow-xl transition-all duration-300 flex items-center space-x-4 cursor-pointer hover:-translate-y-1 gpu-accelerated"
             >
               {/* Scholar Portrait Image */}
               <div className="relative shrink-0">
@@ -54,6 +54,8 @@ export const ScholarsMarquee: React.FC = () => {
                   <img
                     src={scholar.localImageUrl || scholar.imageUrl}
                     alt={scholar.name}
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover object-top group-hover:scale-108 transition-transform duration-300"
                     onError={(e) => {
