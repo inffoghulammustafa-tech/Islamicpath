@@ -18,6 +18,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <audio id="tasmiyah-preload-audio" src="/audio/bismillah.mp3" preload="auto" playsinline autoplay></audio>
+    <script>
+      (function() {
+        try {
+          var a = document.getElementById('tasmiyah-preload-audio');
+          if (a) {
+            var p = a.play();
+            if (p !== undefined) {
+              p.catch(function() {});
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

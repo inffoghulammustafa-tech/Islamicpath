@@ -26,7 +26,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
     onComplete();
   }, [onComplete]);
 
-  // Master function to attempt audio playback automatically
+  // Master function to play audio automatically
   const attemptPlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || hasFinishedRef.current) return;
@@ -42,17 +42,29 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
             console.log('Autoplay attempted, awaiting browser policy clearance:', err);
           });
       }
+    } else {
+      setIsPlaying(true);
     }
   }, []);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // 1. Immediately trigger auto playback on mount
+    // Grab preloaded audio element from index.html if available, or use ref
+    const preloadedAudio = document.getElementById('tasmiyah-preload-audio') as HTMLAudioElement | null;
+    if (preloadedAudio) {
+      audioRef.current = preloadedAudio;
+      if (!preloadedAudio.paused) {
+        setIsPlaying(true);
+      }
+    }
+
+    // 1. Immediately attempt playback on mount
     attemptPlay();
 
-    // 2. Retry shortly after mount to catch when audio buffer finishes initial load
-    const retryTimers = [150, 300, 600, 1000].map((delay) => 
+    // 2. High-frequency retries to trigger playback as soon as browser/buffer unlocks
+    const retryDelays = [50, 150, 300, 500, 800, 1200, 1800, 2500];
+    const timers = retryDelays.map((delay) =>
       setTimeout(() => {
         if (!hasFinishedRef.current && audioRef.current?.paused) {
           attemptPlay();
@@ -60,65 +72,87 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
       }, delay)
     );
 
-    // 3. Instant auto-trigger on ANY browser interaction event (movement, touch, focus, key)
-    const unlockEvents = [
-      'pointerdown',
-      'touchstart',
-      'mousedown',
-      'keydown',
+    // 3. Auto-start on ANY cursor movement, hover, touch, scroll, focus, or key without requiring a click
+    const activationEvents = [
+      'pointerenter',
+      'mouseenter',
+      'pointerover',
+      'mouseover',
       'pointermove',
       'mousemove',
+      'pointerdown',
+      'mousedown',
+      'touchstart',
+      'keydown',
       'wheel',
       'scroll',
       'focus',
-      'click'
+      'visibilitychange'
     ];
 
-    const handleAnyInteraction = () => {
-      if (audioRef.current?.paused && !hasFinishedRef.current) {
+    const handleEventActivation = () => {
+      if (audioRef.current && audioRef.current.paused && !hasFinishedRef.current) {
         attemptPlay();
       }
     };
 
-    unlockEvents.forEach((evt) => {
-      window.addEventListener(evt, handleAnyInteraction, { passive: true, once: true });
-      document.addEventListener(evt, handleAnyInteraction, { passive: true, once: true });
+    activationEvents.forEach((evt) => {
+      window.addEventListener(evt, handleEventActivation, { passive: true });
+      document.addEventListener(evt, handleEventActivation, { passive: true });
     });
 
-    // 4. Safety maximum duration fallback (7 seconds max so page never stays stuck)
+    // 4. Attach audio lifecycle listeners
+    const currentAudio = audioRef.current;
+    const handleTime = () => {
+      if (currentAudio && currentAudio.duration && !isNaN(currentAudio.duration) && currentAudio.duration > 0) {
+        const pct = Math.min(100, (currentAudio.currentTime / currentAudio.duration) * 100);
+        setProgress(pct);
+      }
+    };
+
+    const handleEnded = () => {
+      setProgress(100);
+      setIsPlaying(false);
+      setTimeout(() => {
+        finishIntro();
+      }, 350);
+    };
+
+    const handlePlayState = () => setIsPlaying(true);
+    const handlePauseState = () => setIsPlaying(false);
+
+    if (currentAudio) {
+      currentAudio.addEventListener('timeupdate', handleTime);
+      currentAudio.addEventListener('ended', handleEnded);
+      currentAudio.addEventListener('play', handlePlayState);
+      currentAudio.addEventListener('pause', handlePauseState);
+      currentAudio.addEventListener('canplay', attemptPlay);
+      currentAudio.addEventListener('loadeddata', attemptPlay);
+    }
+
+    // 5. Maximum duration fallback so app never freezes if audio is blocked entirely
     const maxTimer = setTimeout(() => {
       finishIntro();
     }, 7000);
 
     return () => {
-      retryTimers.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
       clearTimeout(maxTimer);
-      unlockEvents.forEach((evt) => {
-        window.removeEventListener(evt, handleAnyInteraction);
-        document.removeEventListener(evt, handleAnyInteraction);
+      activationEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleEventActivation);
+        document.removeEventListener(evt, handleEventActivation);
       });
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (currentAudio) {
+        currentAudio.removeEventListener('timeupdate', handleTime);
+        currentAudio.removeEventListener('ended', handleEnded);
+        currentAudio.removeEventListener('play', handlePlayState);
+        currentAudio.removeEventListener('pause', handlePauseState);
+        currentAudio.removeEventListener('canplay', attemptPlay);
+        currentAudio.removeEventListener('loadeddata', attemptPlay);
+        currentAudio.pause();
       }
     };
   }, [isOpen, attemptPlay, finishIntro]);
-
-  // Sync progress bar directly to actual audio playback
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current;
-    if (audio && audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-      const pct = Math.min(100, (audio.currentTime / audio.duration) * 100);
-      setProgress(pct);
-    }
-  };
-
-  const handleAudioEnded = () => {
-    setProgress(100);
-    setIsPlaying(false);
-    setTimeout(() => {
-      finishIntro();
-    }, 350);
-  };
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,21 +188,6 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
             background: 'radial-gradient(ellipse at center, #0e2439 0%, #081624 55%, #030a12 100%)'
           }}
         >
-          {/* Hidden autoPlay native audio element directly in DOM */}
-          <audio
-            ref={audioRef}
-            src="/audio/bismillah.mp3"
-            autoPlay
-            playsInline
-            preload="auto"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={handleAudioEnded}
-            onCanPlay={attemptPlay}
-            onLoadedData={attemptPlay}
-          />
-
           {/* Ambient spiritual background glow effects */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4af37]/8 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#1b4d24]/30 rounded-full blur-2xl pointer-events-none" />
@@ -266,53 +285,25 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               </p>
             </motion.div>
 
-            {/* Sleek Minimalist Progress Bar */}
+            {/* Clean Minimalist Golden Progress Line (All counting percentage & status text removed) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, delay: 0.45 }}
-              className="w-full max-w-xs sm:max-w-sm flex flex-col items-center gap-3 mb-2"
+              className="w-full max-w-xs sm:max-w-sm flex flex-col items-center mb-2"
             >
-              {/* The Progress Track */}
               <div className="w-full h-[3px] bg-[#14283d] rounded-full overflow-hidden relative shadow-inner">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-[#d4af37] via-[#f7e7be] to-[#e5b869] shadow-[0_0_12px_#d4af37]"
+                  className="h-full bg-gradient-to-r from-[#d4af37] via-[#f7e7be] to-[#e5b869] shadow-[0_0_14px_#d4af37]"
                   style={{ width: `${progress}%` }}
                   transition={{ ease: "linear" }}
                 />
-              </div>
-
-              {/* Status and Audio Waves Indicator */}
-              <div className="flex items-center justify-between w-full text-[11px] text-amber-200/70 font-mono">
-                <div className="flex items-center gap-2">
-                  {isPlaying ? (
-                    <>
-                      <div className="flex items-center gap-0.5 h-3">
-                        <span className="w-0.5 h-2 bg-emerald-400 animate-pulse" />
-                        <span className="w-0.5 h-3 bg-emerald-400 animate-pulse delay-75" />
-                        <span className="w-0.5 h-1.5 bg-emerald-400 animate-pulse delay-150" />
-                        <span className="w-0.5 h-2.5 bg-emerald-400 animate-pulse delay-100" />
-                      </div>
-                      <span className="text-emerald-300 font-sans font-medium text-xs">
-                        تلاوتِ تسمیہ شریف جاری ہے...
-                      </span>
-                    </>
-                  ) : (
-                    <span className="font-sans text-amber-200/70 text-xs">
-                      تسمیہ شریف (بِسْمِ اللَّهِ)
-                    </span>
-                  )}
-                </div>
-                <span>{Math.round(progress)}%</span>
               </div>
             </motion.div>
 
           </div>
 
-          {/* Bottom subtle attribution */}
-          <div className="absolute bottom-4 text-[11px] tracking-wider text-slate-500/70 font-mono">
-            ISLAMIC PATH • SACRED TASMIYAH START
-          </div>
+          {/* Bottom text ISLAMIC PATH • SACRED TASMIYAH START has been completely removed as requested */}
         </motion.div>
       )}
     </AnimatePresence>
