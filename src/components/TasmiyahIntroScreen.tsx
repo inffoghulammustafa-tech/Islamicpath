@@ -16,44 +16,49 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasStartedAudio = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Initialize sacred Adhan audio (Makkah Mukarramah)
-    const audio = new Audio('/audio/adhan_makkah.mp3');
+    // Load sacred Bismillah (Tasmiyah) recitation audio
+    const audio = new Audio('/audio/bismillah.mp3');
     audio.preload = 'auto';
     audioRef.current = audio;
 
-    const startAudio = () => {
+    const playAudio = () => {
       if (!audioRef.current) return;
       audioRef.current.play()
         .then(() => {
           setIsPlaying(true);
+          hasStartedAudio.current = true;
         })
         .catch((err) => {
-          // Deferred until user interaction without showing error text
-          console.log('Adhan autoplay deferred:', err);
+          console.log('Autoplay restriction encountered, awaiting micro-interaction:', err);
         });
     };
 
-    // Attempt automatic playback immediately
-    startAudio();
+    // Immediate automatic play attempt on mount (no click needed)
+    playAudio();
 
-    // In case browser requires interaction, start seamlessly on first touch/pointer
-    const handleGesture = () => {
-      if (audioRef.current && audioRef.current.paused) {
-        startAudio();
+    // In case the browser requires user interaction for unmuted media,
+    // trigger instantly on ANY subtle movement (pointermove, scroll, touch, key, click)
+    const onAnyInteraction = () => {
+      if (audioRef.current && (audioRef.current.paused || !hasStartedAudio.current)) {
+        playAudio();
       }
     };
 
-    window.addEventListener('pointerdown', handleGesture, { once: true });
-    window.addEventListener('touchstart', handleGesture, { once: true });
-    window.addEventListener('keydown', handleGesture, { once: true });
-    window.addEventListener('click', handleGesture, { once: true });
+    window.addEventListener('pointermove', onAnyInteraction, { once: true });
+    window.addEventListener('mousemove', onAnyInteraction, { once: true });
+    window.addEventListener('pointerdown', onAnyInteraction, { once: true });
+    window.addEventListener('touchstart', onAnyInteraction, { once: true });
+    window.addEventListener('keydown', onAnyInteraction, { once: true });
+    window.addEventListener('scroll', onAnyInteraction, { once: true });
+    window.addEventListener('click', onAnyInteraction, { once: true });
 
-    // Progress bar animation (~6.2s majestic intro)
-    const durationMs = 6200;
+    // Progress bar animation (~5 seconds matching the Tasmiyah recitation)
+    const durationMs = 5200;
     const stepMs = 50;
     const increment = 100 / (durationMs / stepMs);
 
@@ -67,7 +72,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               audioRef.current.pause();
             }
             onComplete();
-          }, 600);
+          }, 400);
           return 100;
         }
         return next;
@@ -81,10 +86,13 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      window.removeEventListener('pointerdown', handleGesture);
-      window.removeEventListener('touchstart', handleGesture);
-      window.removeEventListener('keydown', handleGesture);
-      window.removeEventListener('click', handleGesture);
+      window.removeEventListener('pointermove', onAnyInteraction);
+      window.removeEventListener('mousemove', onAnyInteraction);
+      window.removeEventListener('pointerdown', onAnyInteraction);
+      window.removeEventListener('touchstart', onAnyInteraction);
+      window.removeEventListener('keydown', onAnyInteraction);
+      window.removeEventListener('scroll', onAnyInteraction);
+      window.removeEventListener('click', onAnyInteraction);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
@@ -131,8 +139,8 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
           }}
         >
           {/* Ambient spiritual background glow effects */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4af37]/6 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#1b4d24]/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4af37]/7 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#1b4d24]/25 rounded-full blur-2xl pointer-events-none" />
 
           {/* Top Skip / Sound Controls */}
           <div className="absolute top-6 right-6 flex items-center gap-3 z-30">
@@ -166,32 +174,29 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
             >
               <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/60 to-amber-300" />
               
-              <div className="mx-3.5 px-3 py-1 rounded-full border border-amber-400/40 bg-[#081624]/90 shadow-[0_0_15px_rgba(212,175,55,0.25)] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <div className="mx-3.5 px-3.5 py-1 rounded-full border border-amber-400/40 bg-[#081624]/90 shadow-[0_0_15px_rgba(212,175,55,0.25)] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
                 <span className="text-[10px] tracking-[0.2em] font-semibold text-amber-200 uppercase">
-                  الاذان الشریف • Adhan Broadcast
+                  تَسْمِيَةُ الشَّرِيف • SACRED TASMIYAH
                 </span>
               </div>
 
               <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent via-amber-400/60 to-amber-300" />
             </motion.div>
 
-            {/* Sacred Arabic Takbeer & Calligraphy */}
+            {/* Sacred Arabic Calligraphy: Bismillah (Tasmiyah) */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-4"
+              className="mb-5"
             >
               <h1 
-                className="font-arabic text-3xl sm:text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-[#edd392] via-[#fff5d6] to-[#e5b869] drop-shadow-[0_2px_15px_rgba(229,184,105,0.4)] leading-relaxed tracking-wide"
+                className="font-arabic text-3xl sm:text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-[#edd392] via-[#fff5d6] to-[#e5b869] drop-shadow-[0_2px_18px_rgba(229,184,105,0.45)] leading-relaxed tracking-wide"
                 dir="rtl"
               >
-                اللَّهُ أَكْبَرُ اللَّهُ أَكْبَرُ
-              </h1>
-              <p className="font-arabic text-sm sm:text-base text-amber-200/80 mt-1" dir="rtl">
                 بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-              </p>
+              </h1>
             </motion.div>
 
             {/* Grand Brand Title: ISLAMIC (Gold) + PATH (White) */}
@@ -211,7 +216,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               </h2>
             </motion.div>
 
-            {/* Subtitle / Meaning in Urdu & English */}
+            {/* Subtitle / Meaning in English & Urdu */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -219,10 +224,10 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               className="space-y-1.5 mb-10"
             >
               <p className="text-xs sm:text-sm font-medium tracking-[0.22em] text-amber-200/90 uppercase">
-                ALLAH IS THE GREATEST • SACRED CALL TO PRAYER
+                IN THE NAME OF ALLAH, THE MOST BENEFICENT, THE MOST MERCIFUL
               </p>
               <p className="font-urdu text-sm sm:text-base text-slate-300/90 tracking-normal pt-1" dir="rtl">
-                اللہ سب سے بڑا ہے • شروع اللہ کے نام سے جو بڑا مہربان نہایت رحم والا ہے
+                شروع اللہ کے نام سے جو بڑا مہربان نہایت رحم والا ہے
               </p>
             </motion.div>
 
@@ -248,10 +253,10 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
                   {isPlaying ? (
                     <>
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span className="text-emerald-300 font-sans font-medium">صوتِ اذان جاری ہے...</span>
+                      <span className="text-emerald-300 font-sans font-medium">تلاوتِ تسمیہ شریف جاری ہے...</span>
                     </>
                   ) : (
-                    <span className="font-sans text-amber-200/70">اذانِ مکہ مکرمہ</span>
+                    <span className="font-sans text-amber-200/70">تسمیہ شریف (بِسْمِ اللَّهِ)</span>
                   )}
                 </div>
                 <span>{Math.round(progress)}%</span>
@@ -262,7 +267,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
 
           {/* Bottom subtle attribution */}
           <div className="absolute bottom-4 text-[11px] tracking-wider text-slate-500/70 font-mono">
-            ISLAMIC PATH • SACRED ADHAN START
+            ISLAMIC PATH • SACRED TASMIYAH START
           </div>
         </motion.div>
       )}
