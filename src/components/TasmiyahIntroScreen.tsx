@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Volume2, VolumeX, Sparkles, ArrowRight } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, ArrowRight, Mic } from 'lucide-react';
 
 interface TasmiyahIntroScreenProps {
   onComplete: () => void;
@@ -115,7 +115,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
       setIsPlaying(false);
       setTimeout(() => {
         finishIntro();
-      }, 350);
+      }, 400);
     };
 
     const handlePlayState = () => setIsPlaying(true);
@@ -133,7 +133,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
     // 5. Maximum duration fallback so app never freezes if audio is blocked entirely
     const maxTimer = setTimeout(() => {
       finishIntro();
-    }, 7000);
+    }, 7500);
 
     return () => {
       timers.forEach(clearTimeout);
@@ -167,6 +167,24 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
     finishIntro();
   };
 
+  // Dedicated Mic Button Click: Instant guaranteed voice playback
+  const handleMicClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.currentTime = 0;
+    audio.muted = false;
+    setIsMuted(false);
+    audio.play()
+      .then(() => {
+        setIsPlaying(true);
+      })
+      .catch((err) => {
+        console.log('Mic play error:', err);
+      });
+  };
+
   const handleScreenClick = () => {
     if (audioRef.current?.paused) {
       attemptPlay();
@@ -188,6 +206,19 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
             background: 'radial-gradient(ellipse at center, #0e2439 0%, #081624 55%, #030a12 100%)'
           }}
         >
+          {/* Hidden autoPlay native audio element directly in DOM */}
+          <audio
+            ref={audioRef}
+            src="/audio/bismillah.mp3"
+            autoPlay
+            playsInline
+            preload="auto"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onCanPlay={attemptPlay}
+            onLoadedData={attemptPlay}
+          />
+
           {/* Ambient spiritual background glow effects */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#d4af37]/8 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-[#1b4d24]/30 rounded-full blur-2xl pointer-events-none" />
@@ -275,7 +306,7 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.35 }}
-              className="space-y-1.5 mb-10"
+              className="space-y-1.5 mb-5"
             >
               <p className="text-xs sm:text-sm font-medium tracking-[0.22em] text-amber-200/90 uppercase">
                 IN THE NAME OF ALLAH, THE MOST BENEFICENT, THE MOST MERCIFUL
@@ -285,12 +316,43 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
               </p>
             </motion.div>
 
-            {/* Clean Minimalist Golden Progress Line (All counting percentage & status text removed) */}
+            {/* Dedicated Spiritual Golden Mic Button directly below Translation */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex flex-col items-center justify-center my-3 relative z-20"
+            >
+              <motion.button
+                id="tasmiyah-mic-btn"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={handleMicClick}
+                className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${
+                  isPlaying
+                    ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 shadow-[0_0_30px_rgba(245,158,11,0.65)] ring-4 ring-amber-400/40'
+                    : 'bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white border-2 border-amber-400/50 hover:border-amber-300 shadow-[0_0_20px_rgba(212,175,55,0.35)]'
+                }`}
+                title="تسمیہ شریف سنیں (Listen to Tasmiyah)"
+                aria-label="تسمیہ شریف سنیں"
+              >
+                {/* Glowing ripple aura rings when playing */}
+                {isPlaying && (
+                  <>
+                    <span className="absolute inset-0 rounded-full border-2 border-amber-400 animate-ping opacity-60 pointer-events-none" />
+                    <span className="absolute -inset-2 rounded-full border border-amber-400/40 animate-pulse pointer-events-none" />
+                  </>
+                )}
+                <Mic className={`w-6 h-6 drop-shadow-xs transition-transform ${isPlaying ? 'scale-110' : ''}`} />
+              </motion.button>
+            </motion.div>
+
+            {/* Clean Minimalist Golden Progress Line */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, delay: 0.45 }}
-              className="w-full max-w-xs sm:max-w-sm flex flex-col items-center mb-2"
+              className="w-full max-w-xs sm:max-w-sm flex flex-col items-center mt-3 mb-2"
             >
               <div className="w-full h-[3px] bg-[#14283d] rounded-full overflow-hidden relative shadow-inner">
                 <motion.div
@@ -302,8 +364,6 @@ export const TasmiyahIntroScreen: React.FC<TasmiyahIntroScreenProps> = ({
             </motion.div>
 
           </div>
-
-          {/* Bottom text ISLAMIC PATH • SACRED TASMIYAH START has been completely removed as requested */}
         </motion.div>
       )}
     </AnimatePresence>
