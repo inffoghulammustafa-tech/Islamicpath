@@ -333,9 +333,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <button
                 id="hero-download-app-btn"
                 onClick={onOpenDownload}
-                className="px-7 py-3.5 rounded-full bg-[#3b873e] hover:bg-[#2f7332] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
+                className="px-7 py-3.5 rounded-full bg-[#3b873e] hover:bg-[#2f7332] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow transition-all duration-200 cursor-pointer flex items-center gap-2"
+                title="براہِ راست ڈیوائس پر انسٹال کریں"
               >
-                Download App
+                <Download className="w-4 h-4" />
+                <span>Download App</span>
               </button>
 
               <button
@@ -366,11 +368,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 </span>
 
                 {/* Google Play SVG */}
-                <span title="Google Play Store" className="text-slate-700 hover:text-black transition-colors cursor-pointer" onClick={onOpenDownload}>
+                <a 
+                  href="https://play.google.com/store/search?q=islamicpath786&c=apps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Google Play Store - Search: islamicpath786" 
+                  className="text-slate-700 hover:text-[#287d46] transition-colors cursor-pointer"
+                >
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                     <path d="M3.609 1.814L13.792 12 3.61 22.186c-.378-.42-.61-.994-.61-1.636V3.45c0-.642.232-1.216.61-1.636zm11.233 11.235l2.428 2.429-11.75 6.784 9.322-9.213zm0-2.098L5.52 1.737l11.75 6.785-2.428 2.428zm1.488 1.05l3.87-2.235c.67-.387.67-1.02 0-1.406l-3.87-2.235-2.095 2.095 2.095 2.095z" />
                   </svg>
-                </span>
+                </a>
 
                 {/* Huawei AppGallery SVG */}
                 <span title="Huawei AppGallery" className="text-slate-700 hover:text-black transition-colors cursor-pointer" onClick={onOpenDownload}>
@@ -748,6 +756,41 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               </motion.div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Offline App & Auto-Adhan Play Store Installation Highlight Banner */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#143d1a] via-[#1b5e20] to-[#256e29] p-5 sm:p-6 text-white shadow-md border border-emerald-500/30">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-yellow-400 text-emerald-950 flex items-center justify-center shrink-0 shadow-md">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm sm:text-base text-yellow-300">
+                  موبائل و ٹیبلیٹ پر آف لائن انسٹال کریں (Offline App)
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 text-[10px] font-bold border border-yellow-400/30">
+                  Play Store / PWA
+                </span>
+              </div>
+              <p className="text-xs text-emerald-100 mt-1 leading-relaxed">
+                انسٹال کے بعد یہ بغیر نیٹ ورک (100% Offline) کے چلے گی اور نماز کے وقت خودکار اذان موبائل کے اسپیکر پر گونجے گی۔
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+            <button
+              onClick={onOpenDownload}
+              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-emerald-950 font-black text-xs sm:text-sm shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+              title="براہِ راست ڈیوائس پر انسٹال کریں"
+            >
+              <Download className="w-4 h-4" />
+              <span>ابھی ڈیوائس پر انسٹال کریں (Direct Install)</span>
+            </button>
+          </div>
         </div>
       </section>
 

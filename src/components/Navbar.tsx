@@ -209,22 +209,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Buttons: DONATE and Download the App */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Install / Download App Button */}
+            <button
+              id="header-download-btn"
+              onClick={onOpenDownload}
+              className="inline-flex items-center space-x-1.5 px-3 sm:px-4 py-2 rounded-full bg-[#e8f5e9] border border-[#287d46] text-[#287d46] hover:bg-[#287d46] hover:text-white font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer shadow-2xs group"
+              title="Play Store / ڈیوائس پر ایپ انسٹال کریں"
+            >
+              <Download className="w-3.5 h-3.5 text-[#287d46] group-hover:text-white transition-colors" />
+              <span>ایپ انسٹال کریں</span>
+            </button>
+
             {/* DONATE Button - Solid Green */}
             <button
               id="header-donate-btn"
               onClick={onOpenDonate}
-              className="px-5 sm:px-6 py-2 rounded-full bg-[#287d46] hover:bg-[#20683a] text-white font-bold text-xs sm:text-sm tracking-wide shadow-xs hover:shadow transition-all duration-200 cursor-pointer"
+              className="hidden sm:inline-flex px-5 sm:px-6 py-2 rounded-full bg-[#287d46] hover:bg-[#20683a] text-white font-bold text-xs sm:text-sm tracking-wide shadow-xs hover:shadow transition-all duration-200 cursor-pointer"
             >
               DONATE
-            </button>
-
-            {/* Download the App Button - Outlined Pill */}
-            <button
-              id="header-download-btn"
-              onClick={onOpenDownload}
-              className="hidden sm:inline-flex px-4 sm:px-5 py-2 rounded-full border border-[#287d46] text-[#287d46] hover:bg-[#287d46]/5 font-semibold text-xs sm:text-sm transition-all duration-200 cursor-pointer"
-            >
-              Download the App
             </button>
 
             {/* Mobile Menu Toggle */}

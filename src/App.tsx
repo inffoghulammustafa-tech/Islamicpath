@@ -38,16 +38,66 @@ import { ZakatSection } from './components/ZakatSection';
 import { AboutSection } from './components/AboutSection';
 import { ContactSection } from './components/ContactSection';
 import { DonateModal } from './components/DonateModal';
-import { DownloadAppModal } from './components/DownloadAppModal';
 import { TasmiyahIntroScreen } from './components/TasmiyahIntroScreen';
+import { AutoAdhanGlobalModal } from './components/AutoAdhanGlobalModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import { InstallFeedbackToast, InstallNotificationData } from './components/InstallFeedbackToast';
+import { usePWAInstall } from './hooks/usePWAInstall';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isDonateOpen, setIsDonateOpen] = useState(false);
-  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [copiedFooterId, setCopiedFooterId] = useState<string | null>(null);
+  const [installNotification, setInstallNotification] = useState<InstallNotificationData | null>(null);
+
+  const { triggerDirectInstall } = usePWAInstall();
+
+  /**
+   * Direct Device Installation Trigger:
+   * Directly invokes the native device prompt or installs without opening any modal page.
+   */
+  const handleDirectDownloadOrInstall = async () => {
+    const result = await triggerDirectInstall();
+    if (result.status === 'pc_downloaded') {
+      setInstallNotification({
+        type: 'pc',
+        title: 'کمپیوٹر ایپ ڈاؤنلوڈ ہو گئی! (PC Desktop App)',
+        message: result.message
+      });
+    } else if (result.status === 'prompted_accepted') {
+      setInstallNotification({
+        type: 'success',
+        title: 'ایپ کامیابی سے انسٹال ہو گئی!',
+        message: result.message
+      });
+    } else if (result.status === 'already_installed') {
+      setInstallNotification({
+        type: 'info',
+        title: 'پہلے سے انسٹال شدہ (Already Installed)',
+        message: result.message
+      });
+    } else if (result.status === 'ios_safari') {
+      setInstallNotification({
+        type: 'ios',
+        title: 'iPhone / iPad پر انسٹال کریں',
+        message: result.message
+      });
+    } else if (result.status === 'browser_manual') {
+      setInstallNotification({
+        type: 'guide',
+        title: 'براؤزر سے انسٹال کریں',
+        message: result.message
+      });
+    } else if (result.status === 'prompted_dismissed') {
+      setInstallNotification({
+        type: 'info',
+        title: 'انسٹالیشن منسوخ',
+        message: result.message
+      });
+    }
+  };
 
   // Scroll to top immediately whenever activeTab changes so every page starts from the very top
   useEffect(() => {
@@ -102,7 +152,7 @@ export default function App() {
         activeTab={activeTab} 
         setActiveTab={handleTabSelect} 
         onOpenDonate={() => setIsDonateOpen(true)}
-        onOpenDownload={() => setIsDownloadOpen(true)}
+        onOpenDownload={handleDirectDownloadOrInstall}
       />
 
       {/* Main Content Area */}
@@ -119,7 +169,7 @@ export default function App() {
               <HomeDashboard 
                 setActiveTab={handleTabSelect} 
                 onOpenDonate={() => setIsDonateOpen(true)}
-                onOpenDownload={() => setIsDownloadOpen(true)}
+                onOpenDownload={handleDirectDownloadOrInstall}
               />
             )}
             {activeTab === 'quran' && <QuranSection />}
@@ -183,8 +233,9 @@ export default function App() {
               </p>
               <div className="flex items-center space-x-2 pt-1">
                 <button
-                  onClick={() => setIsDownloadOpen(true)}
+                  onClick={handleDirectDownloadOrInstall}
                   className="px-4 py-2 rounded-xl bg-[#2e7d32] hover:bg-[#256629] text-white text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5 cursor-pointer"
+                  title="Direct Install to Device"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Get Mobile App</span>
@@ -404,7 +455,18 @@ export default function App() {
 
       {/* Modals */}
       <DonateModal isOpen={isDonateOpen} onClose={() => setIsDonateOpen(false)} />
-      <DownloadAppModal isOpen={isDownloadOpen} onClose={() => setIsDownloadOpen(false)} />
+
+      {/* Direct Device Install Feedback Toast */}
+      <InstallFeedbackToast 
+        notification={installNotification} 
+        onClose={() => setInstallNotification(null)} 
+      />
+
+      {/* Global Automatic Adhan Alert & Prayer Caller */}
+      <AutoAdhanGlobalModal />
+
+      {/* 100% Offline Connectivity Status Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }

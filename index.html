@@ -9,9 +9,19 @@
     <meta property="og:description" content="Comprehensive Islamic platform featuring Holy Quran with audio &amp; translations, authentic Hadith library, live prayer times, Qibla compass, digital Tasbih, Duas, 99 Names of Allah, Zakat calculator, and AI Islamic knowledge search." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#008000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="keywords" content="islamicpath786, islamic path, quran, hadith, namaz times, adhan" />
+    <meta name="application-name" content="islamicpath786" />
+    <meta name="apple-mobile-web-app-title" content="islamicpath786" />
+    <meta name="google-play-app" content="app-id=com.islamicpath786.app" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
     <link rel="shortcut icon" href="/favicon.jpg" />
-    <link rel="apple-touch-icon" href="/favicon.jpg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" href="/audio/bismillah.mp3" as="fetch" crossorigin />
@@ -33,6 +43,34 @@
       })();
     </script>
     <div id="root"></div>
+    <script>
+      // Global PWA Prompt listener
+      window.__pwaInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__pwaInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-available', { detail: e }));
+        console.log('IslamicPath: Global beforeinstallprompt caught!');
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__pwaInstallPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwa-app-installed'));
+        console.log('IslamicPath: App successfully installed to device!');
+      });
+
+      // 1. Service Worker Register Karna
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function (reg) {
+              console.log('Service Worker Registered!', reg);
+            })
+            .catch(function (err) {
+              console.log('Service Worker Failed!', err);
+            });
+        });
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

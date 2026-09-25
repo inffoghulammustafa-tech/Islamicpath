@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.islamicpath786.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0F:52:AB:FC:CF:22:98:AE:52:95:90:3A:BF:FD:F4:9A:1A:F3:33:DE:1C:18:78:E6:3A:FB:56:4C"
+      ]
+    }
+  }
+]

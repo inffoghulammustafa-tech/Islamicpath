@@ -17,11 +17,13 @@ import {
   CheckCircle2, 
   RotateCcw,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  WifiOff
 } from 'lucide-react';
 import { CityLocation, PrayerTimesData } from '../types';
 import { POPULAR_CITIES, calculatePrayerTimes } from '../data/prayerData';
 import { adhanPlayer, ADHAN_VOICES } from '../utils/adhanPlayer';
+import { autoAdhanEngine } from '../utils/autoAdhanEngine';
 
 const parseTimeToMinutes = (timeStr: string): number => {
   if (!timeStr) return -1;
@@ -253,6 +255,31 @@ export const PrayerSection: React.FC = () => {
 
       {activeSubTab === 'times' && (
         <div className="space-y-6">
+          {/* 100% Offline Mode & Device Auto-Adhan Badge */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-[#2e7d32] text-white shrink-0">
+                <WifiOff className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-2">
+                  <span>100% آف لائن موڈ اور خودکار اذان (Offline Salah &amp; Auto Adhan)</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-200/70 text-[#1b5e20] text-[10px] font-bold">فعال ہے</span>
+                </div>
+                <div className="text-[11px] text-emerald-700 mt-0.5">
+                  تمام اوقات بغیر نیٹ ورک کے فلکیاتی کلیے سے چلتے ہیں، اور موبائل یا ٹیبلیٹ پر نماز کے وقت خودکار اذان گونجتی ہے۔
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => autoAdhanEngine.testAdhan('Fajr', 'فجر')}
+              className="shrink-0 px-4 py-2 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-100 text-[#1b5e20] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-[#2e7d32]" />
+              <span>ٹیسٹ اذان سنیں (Test Voice)</span>
+            </button>
+          </div>
+
           {/* Highlight Banner */}
           <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#edf7f0] via-[#f2faf4] to-white border border-emerald-200 shadow-sm">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">

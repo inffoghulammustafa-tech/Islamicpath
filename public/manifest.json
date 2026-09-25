@@ -1,0 +1,42 @@
+{
+  "id": "islamicpath786",
+  "short_name": "islamicpath786",
+  "name": "Islamic Path (islamicpath786)",
+  "description": "Comprehensive Islamic platform featuring Quran with audio, authentic Hadith, solar prayer times, digital Tasbih, Duas, and automated Adhan alerts. Search islamicpath786 on Play Store and Web.",
+  "package_name": "com.islamicpath786.app",
+  "start_url": "/?source=pwa&app=islamicpath786",
+  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#008000",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["lifestyle", "education", "books"],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.islamicpath786.app",
+      "id": "com.islamicpath786.app"
+    }
+  ],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
+}
