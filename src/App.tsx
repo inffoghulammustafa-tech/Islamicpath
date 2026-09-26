@@ -198,20 +198,21 @@ export default function App() {
 
       {/* IslamicPath Clean Professional Footer Matching Image 1 & 2 with Animated Hover Line Effect */}
       <footer className="relative bg-[#f8faf9] border-t border-slate-200/90 pt-16 pb-12 mt-16 text-slate-600 overflow-hidden">
-        {/* Subtle Mosque Background Watermark & Atmosphere */}
+        {/* Mosque Background Image with Low Opacity */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
           <img
-            src="/images/mosque-footer.jpg"
+            src="https://i.pinimg.com/736x/4e/f4/60/4ef4600736492cdbc14c48766b3441b4.jpg"
             alt="Masjid Architecture Background"
-            className="w-full h-full object-cover object-bottom opacity-[0.08] filter grayscale contrast-125 transition-transform duration-1000 ease-out"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover object-center opacity-[0.16] transition-transform duration-1000 ease-out"
             onError={(e) => {
               const target = e.currentTarget;
-              if (target.src !== 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2000&q=80') {
-                target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2000&q=80';
+              if (!target.src.endsWith('/images/mosque-footer.jpg')) {
+                target.src = '/images/mosque-footer.jpg';
               }
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f8faf9]/92 via-[#f8faf9]/88 to-[#f1f5f3]/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#f8faf9]/40 via-transparent to-[#f8faf9]/50" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 relative z-10">
@@ -439,64 +440,6 @@ export default function App() {
                   <span>Open Contact &amp; Inquiry Page (مکمل رابطہ صفحہ)</span>
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* All Pages Row with Animated Underline on Cursor Hover */}
-          <div className="pt-8 border-t border-slate-200/90">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-              <h4 className="text-xs font-black text-[#111827] uppercase tracking-wider flex items-center gap-2">
-                <span>Quick Navigation • تمام صفحات</span>
-                <span className="w-8 h-[2.5px] bg-[#2e7d32] rounded-full inline-block" />
-              </h4>
-              <span className="text-[11px] font-bold text-[#1b5e20] bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full w-fit">
-                11 Interactive Pages • 100% Offline Ready
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-              {[
-                { id: 'home' as ActiveTab, titleEn: 'Home', titleUr: 'مرکزی صفحہ', icon: Globe },
-                { id: 'quran' as ActiveTab, titleEn: 'Holy Quran', titleUr: 'قرآن مجید', icon: BookOpen },
-                { id: 'hadith' as ActiveTab, titleEn: 'Hadith Books', titleUr: 'احادیث مبارکہ', icon: BookmarkCheck },
-                { id: 'prayer' as ActiveTab, titleEn: 'Prayer Times', titleUr: 'اوقاتِ نماز', icon: Clock },
-                { id: 'qibla' as ActiveTab, titleEn: 'Qibla Direction', titleUr: 'قبلہ رخ کمپاس', icon: Compass },
-                { id: 'tasbih' as ActiveTab, titleEn: 'Digital Tasbih', titleUr: 'تسبیح کاؤنٹر', icon: Sparkles },
-                { id: 'duas' as ActiveTab, titleEn: 'Masnoon Duas', titleUr: 'مسنون دعائیں', icon: Heart },
-                { id: 'names' as ActiveTab, titleEn: '99 Names', titleUr: 'اسماء الحسنیٰ', icon: Sparkles },
-                { id: 'zakat' as ActiveTab, titleEn: 'Zakat Calculator', titleUr: 'زکوٰۃ کیلکولیٹر', icon: Calculator },
-                { id: 'about' as ActiveTab, titleEn: 'About Us', titleUr: 'ہمارے متعلق', icon: Globe },
-                { id: 'contact' as ActiveTab, titleEn: 'Contact Support', titleUr: 'رابطہ صفحہ', icon: Mail },
-              ].map((page) => {
-                const isActive = activeTab === page.id;
-                const IconComponent = page.icon;
-                return (
-                  <button
-                    key={page.id}
-                    onClick={() => handleTabSelect(page.id)}
-                    className={`group relative p-2.5 rounded-xl border text-left transition-all duration-300 cursor-pointer ${
-                      isActive
-                        ? 'bg-emerald-50 border-[#2e7d32] shadow-xs'
-                        : 'bg-white hover:bg-emerald-50/40 border-slate-200 hover:border-[#2e7d32] shadow-xs hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-[#2e7d32]' : 'text-slate-400 group-hover:text-[#2e7d32] transition-colors'}`} />
-                      {isActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#2e7d32] animate-pulse" />
-                      )}
-                    </div>
-                    <div className="relative inline-block text-xs font-bold text-slate-800 group-hover:text-[#2e7d32] transition-colors pb-0.5">
-                      <span>{page.titleEn}</span>
-                      {/* Animated underline line effect on cursor hover */}
-                      <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#2e7d32] rounded-full transition-all duration-300 ease-out group-hover:w-full shadow-[0_0_8px_rgba(46,125,50,0.5)]" />
-                    </div>
-                    <div className="font-urdu text-[11px] text-slate-500 group-hover:text-emerald-800 mt-0.5" dir="rtl">
-                      {page.titleUr}
-                    </div>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
